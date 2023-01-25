@@ -62,8 +62,8 @@ public class MainApplication extends Application{
 		loop.play();
 		
 		this.gameWorld = new GameWorld(WIDTH/SnakeBody.SIZE, HEIGHT/SnakeBody.SIZE);
-		snake.add(new SnakeBody(8, 5));
-		snake.add(new SnakeBody(7, 5));
+		//snake.add(new SnakeBody(8, 5));
+		//snake.add(new SnakeBody(7, 5));
 		snake.add(new SnakeBody(6, 5));
 		snake.add(new SnakeBody(5, 5));
 		generateApple();
