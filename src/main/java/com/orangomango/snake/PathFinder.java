@@ -124,7 +124,7 @@ public class PathFinder implements Iterable<Cell>{
 		this.map[9][6] = new Cell(9, 6, true);
 		this.map[10][6] = new Cell(10, 6, true);
 		this.map[10][7] = new Cell(10, 7, true);
-		this.map[10][8] = new Cell(110 8, true);
+		this.map[10][8] = new Cell(10, 8, true);
 		this.map[10][9] = new Cell(10, 9, true);
 		this.map[10][10] = new Cell(10, 10, true);
 	}

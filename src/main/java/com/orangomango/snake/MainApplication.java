@@ -151,7 +151,7 @@ public class MainApplication extends Application{
 	}
 	
 	private void generateApple(){
-		Apple apple = new Apple(random.nextInt(WIDTH/(int)Apple.SIZE), random.nextInt(HEIGHT/(int)Apple.SIZE));
+		/*Apple apple = new Apple(random.nextInt(WIDTH/(int)Apple.SIZE), random.nextInt(HEIGHT/(int)Apple.SIZE));
 		for (int i = 0; i < this.snake.size(); i++){
 			SnakeBody sb = this.snake.get(i);
 			if (sb.x == apple.x && sb.y == apple.y){
@@ -159,8 +159,8 @@ public class MainApplication extends Application{
 				return;
 			}
 		}
-		this.apple = apple;
-		//this.apple = null;
+		this.apple = apple;*/
+		this.apple = null;
 	}
 	
 	private void update(GraphicsContext gc){
@@ -185,7 +185,7 @@ public class MainApplication extends Application{
 		
 		for (int i = 0; i < this.snake.size(); i++){
 			SnakeBody sb = this.snake.get(i);
-			//sb.render(gc, i == 0);
+			sb.render(gc, i == 0);
 			this.gameWorld.set(sb.x, sb.y);
 		}
 		//if (this.apple != null) this.apple.render(gc);
