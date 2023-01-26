@@ -1,4 +1,4 @@
-package com.orangomango.snake;
+package com.orangomango.snake.game;
 
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;

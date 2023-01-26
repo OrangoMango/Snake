@@ -1,4 +1,4 @@
-package com.orangomango.snake;
+package com.orangomango.snake.game;
 
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
@@ -61,10 +61,6 @@ public class PathFinder implements Iterable<Cell>{
 			boolean removed = openCells.remove(currentCell);
 			currentCell.visited = true;
 
-			if (openCells.size() == 0 && removed){
-				break;
-			}
-
 			if (isInMap(cx, cy-1)) openCell(cx, cy-1);
 			if (isInMap(cx+1, cy)) openCell(cx+1, cy);
 			if (isInMap(cx, cy+1)) openCell(cx, cy+1);
@@ -89,6 +85,8 @@ public class PathFinder implements Iterable<Cell>{
 			if (bestCellIndex >= 0){
 				currentCell = openCells.get(bestCellIndex);
 				endReached = currentCell.end;
+			} else {
+				throw new IllegalStateException("Unreachable end");
 			}
 		}
 
@@ -118,15 +116,6 @@ public class PathFinder implements Iterable<Cell>{
 				this.map[i][j] = new Cell(i, j, gw.isSolid(i, j));
 			}
 		}
-		this.map[6][6] = new Cell(6, 6, true);
-		this.map[7][6] = new Cell(7, 6, true);
-		this.map[8][6] = new Cell(8, 6, true);
-		this.map[9][6] = new Cell(9, 6, true);
-		this.map[10][6] = new Cell(10, 6, true);
-		this.map[10][7] = new Cell(10, 7, true);
-		this.map[10][8] = new Cell(10, 8, true);
-		this.map[10][9] = new Cell(10, 9, true);
-		this.map[10][10] = new Cell(10, 10, true);
 	}
 	
 	public void render(GraphicsContext gc, boolean showText){

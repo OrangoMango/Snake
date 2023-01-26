@@ -1,10 +1,10 @@
-package com.orangomango.snake;
+package com.orangomango.snake.game;
 
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
 
 public class Apple{
-	public static final double SIZE = SnakeBody.SIZE;
+	public static int SIZE = SnakeBody.SIZE;
 	
 	public int x, y;
 	

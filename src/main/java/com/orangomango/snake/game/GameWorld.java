@@ -1,4 +1,4 @@
-package com.orangomango.snake;
+package com.orangomango.snake.game;
 
 public class GameWorld{
 	private boolean[][] map;
