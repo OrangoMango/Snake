@@ -16,7 +16,7 @@ public class GameScreen{
 	private static final int WIDTH = 720;
 	private static final int HEIGHT = 480;
 	private int frames, fps;
-	private static final int FPS = 60;
+	private static final int FPS = 40;
 	
 	private List<SnakeBody> snake = new ArrayList<>();
 	private volatile Apple apple;
