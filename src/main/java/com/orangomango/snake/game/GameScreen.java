@@ -1,5 +1,6 @@
 package com.orangomango.snake.game;
 
+import javafx.stage.Stage;
 import javafx.scene.Scene;
 import javafx.scene.layout.StackPane;
 import javafx.scene.canvas.*;
@@ -12,12 +13,15 @@ import javafx.geometry.Side;
 
 import java.util.*;
 
+import com.orangomango.snake.HomeScreen;
+
 public class GameScreen{
 	private static final int WIDTH = 720;
 	private static final int HEIGHT = 480;
 	private int frames, fps;
 	private static final int FPS = 40;
 	
+	private Stage stage;
 	private List<SnakeBody> snake = new ArrayList<>();
 	private volatile Apple apple;
 	private Random random = new Random();
@@ -28,11 +32,13 @@ public class GameScreen{
 	private GameWorld gameWorld;
 	private int timeInterval;
 	private boolean showInfo = false;
-	private boolean ai;
+	private boolean ai, wrap;
+	private boolean threadRunning = true;
+	private Timeline loop;
 	
-	public GameScreen(int size, int timeInterval, boolean ai){
+	public GameScreen(Stage stage, int size, int timeInterval, boolean ai, boolean wrap){
 		Thread counter = new Thread(() -> {
-			while (true){
+			while (this.threadRunning){
 				try {
 					this.fps = Math.min(this.frames, FPS);
 					this.frames = 0;
@@ -45,8 +51,10 @@ public class GameScreen{
 		counter.setDaemon(true);
 		counter.start();
 		
+		this.stage = stage;
 		this.timeInterval = timeInterval;
 		this.ai = ai;
+		this.wrap = wrap;
 		SnakeBody.SIZE = Apple.SIZE = size;
 	}
 	
@@ -57,11 +65,13 @@ public class GameScreen{
 		canvas.setOnKeyPressed(e -> this.keys.put(e.getCode(), true));
 		canvas.setOnKeyReleased(e -> this.keys.put(e.getCode(), false));
 		GraphicsContext gc = canvas.getGraphicsContext2D();
+		gc.setFill(Color.BLACK);
+		gc.fillRect(0, 0, WIDTH, HEIGHT);
 		pane.getChildren().add(canvas);
 		
-		Timeline loop = new Timeline(new KeyFrame(Duration.millis(1000.0/FPS), e -> update(gc)));
-		loop.setCycleCount(Animation.INDEFINITE);
-		loop.play();
+		this.loop = new Timeline(new KeyFrame(Duration.millis(1000.0/FPS), e -> update(gc)));
+		this.loop.setCycleCount(Animation.INDEFINITE);
+		this.loop.play();
 		
 		this.gameWorld = new GameWorld(WIDTH/SnakeBody.SIZE, HEIGHT/SnakeBody.SIZE);
 		snake.add(new SnakeBody(6, 5));
@@ -77,7 +87,7 @@ public class GameScreen{
 		timer.start();
 		
 		Thread gameThread = new Thread(() -> {
-			while (true){
+			while (this.threadRunning){
 				try {
 					if (this.apple == null) continue;
 					SnakeBody head = snake.get(0);				
@@ -92,13 +102,18 @@ public class GameScreen{
 						}
 					}
 					
+					if (this.wrap){
+						next.wrap(WIDTH/SnakeBody.SIZE, HEIGHT/SnakeBody.SIZE);
+					} else if (next.outside(WIDTH/SnakeBody.SIZE, HEIGHT/SnakeBody.SIZE)){
+						dead = true;
+					}
+					
 					if (next.x == apple.x && next.y == apple.y){
 						this.score++;
 						generateApple();
 					} else if (!dead){
 						snake.remove(snake.size()-1);
 					}
-					next.wrap(WIDTH/SnakeBody.SIZE, HEIGHT/SnakeBody.SIZE);
 					
 					if (dead){
 						Thread.sleep(5000);
@@ -202,6 +217,12 @@ public class GameScreen{
 		} else if (keys.getOrDefault(KeyCode.F2, false)){
 			this.ai = !this.ai;
 			keys.put(KeyCode.F2, false);
+		} else if (keys.getOrDefault(KeyCode.ESCAPE, false)){
+			this.threadRunning = false;
+			this.loop.stop();
+			HomeScreen hs = new HomeScreen(this.stage);
+			this.stage.setScene(hs.getScene());
+			return;
 		}
 		
 		for (int i = 0; i < this.snake.size(); i++){

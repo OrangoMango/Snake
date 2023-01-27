@@ -32,4 +32,20 @@ public class SnakeBody{
 			this.y = 0;
 		}
 	}
+	
+	public boolean outside(int w, int h){
+		if (this.x >= w){
+			return true;
+		}
+		if (this.x < 0){
+			return true;
+		}
+		if (this.y < 0){
+			return true;
+		}
+		if (this.y >= h){
+			return true;
+		}
+		return false;
+	}
 }
