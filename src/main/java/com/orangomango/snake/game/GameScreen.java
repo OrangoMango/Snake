@@ -14,6 +14,7 @@ import javafx.geometry.Side;
 import java.util.*;
 
 import com.orangomango.snake.HomeScreen;
+import com.orangomango.snake.MainApplication;
 
 public class GameScreen{
 	private static final int WIDTH = 720;
@@ -110,13 +111,15 @@ public class GameScreen{
 					
 					if (next.x == apple.x && next.y == apple.y){
 						this.score++;
+						MainApplication.playSound("point");
 						generateApple();
 					} else if (!dead){
 						snake.remove(snake.size()-1);
 					}
 					
 					if (dead){
-						Thread.sleep(5000);
+						MainApplication.playSound("gameover");
+						Thread.sleep(1000);
 						System.out.println("GAME OVER: "+this.score);
 						resetGame();
 					} else{
@@ -133,6 +136,7 @@ public class GameScreen{
 		gameThread.setDaemon(true);
 		gameThread.start();
 		
+		MainApplication.playSound("gameStart");
 		return new Scene(pane, WIDTH, HEIGHT);
 	}
 	
@@ -161,8 +165,12 @@ public class GameScreen{
 		snake.add(new SnakeBody(5, 5));
 		this.direction = Side.RIGHT;
 		this.snakeDirection = Side.RIGHT;
-		if (this.score > this.highscore) this.highscore = this.score;
+		if (this.score > this.highscore){
+			this.highscore = this.score;
+			MainApplication.playSound("highscore");
+		}
 		this.score = 0;
+		MainApplication.playSound("gameStart");
 		generateApple();
 	}
 	
@@ -247,7 +255,7 @@ public class GameScreen{
 		if (this.showInfo) gc.fillText(String.format("FPS: %d, Snake direction: %s, Dir: %s", fps, this.snakeDirection, this.direction), 30, 55);
 		gc.save();
 		gc.setFont(new Font("Sans-serif", 20));
-		gc.fillText(String.format("Score: %d, Highscore: %d", this.score, this.highscore), 30, 40);
+		gc.fillText(String.format("Score: %d, Highscore: %d"+(this.ai ? " | AI" : ""), this.score, this.highscore), 30, 40);
 		gc.restore();
 	}
 }

@@ -2,6 +2,7 @@ package com.orangomango.snake;
 
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
+import javafx.scene.image.Image;
 import javafx.geometry.Rectangle2D;
 
 public class Checkbox{
@@ -11,6 +12,8 @@ public class Checkbox{
 	
 	private static final double WIDTH = 0.15*HomeScreen.WIDTH;
 	private static final double HEIGHT = 0.1*HomeScreen.HEIGHT;
+	private static final Image IMAGE_ON = new Image(Checkbox.class.getResourceAsStream("/checkbox_on.png"));
+	private static final Image IMAGE_OFF = new Image(Checkbox.class.getResourceAsStream("/checkbox_off.png"));
 	
 	public Checkbox(double x, double y, String text){
 		this.x = x;
@@ -32,8 +35,7 @@ public class Checkbox{
 	}
 	
 	public void render(GraphicsContext gc){
-		gc.setFill(on ? Color.GREEN : Color.RED);
-		gc.fillRect(this.x, this.y, WIDTH, HEIGHT);
+		gc.drawImage(on ? IMAGE_ON : IMAGE_OFF, this.x, this.y, WIDTH, HEIGHT);
 		gc.setFill(Color.WHITE);
 		gc.fillText(this.text, this.x+WIDTH*1.1, this.y+HEIGHT/2);
 	}

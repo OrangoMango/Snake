@@ -5,6 +5,7 @@ import javafx.scene.Scene;
 import javafx.scene.layout.StackPane;
 import javafx.scene.canvas.*;
 import javafx.scene.paint.Color;
+import javafx.scene.image.Image;
 import javafx.animation.*;
 import javafx.util.Duration;
 import javafx.geometry.Rectangle2D;
@@ -17,6 +18,7 @@ public class HomeScreen{
 	public static final int WIDTH = 720;
 	public static final int HEIGHT = 480;
 	private static final int FPS = 40;
+	private static final Image PLAY_BUTTON = new Image(HomeScreen.class.getResourceAsStream("/play_button.png"));
 	
 	private Stage stage;
 	private Rectangle2D playButton;
@@ -49,10 +51,12 @@ public class HomeScreen{
 				boolean ai = false;
 				GameScreen gs = new GameScreen(this.stage, this.sliders.get(0).getValue(), this.sliders.get(1).getValue(), this.checkboxes.get(0).isSelected(), this.checkboxes.get(1).isSelected());
 				this.stage.setScene(gs.getScene());
+				MainApplication.playSound("gui");
 			} else {
 				for (Checkbox box : this.checkboxes){
 					if (box.contains(e.getX(), e.getY())){
 						box.toggle();
+						MainApplication.playSound("gui");
 					}
 				}
 			}
@@ -62,6 +66,14 @@ public class HomeScreen{
 				double cursor = slider.contains(e.getX(), e.getY());
 				if (cursor >= 0){
 					slider.updateCursor(cursor);
+				}
+			}
+		});
+		canvas.setOnMouseReleased(e -> {
+			for (Slider slider : this.sliders){
+				double cursor = slider.contains(e.getX(), e.getY());
+				if (cursor >= 0){
+					MainApplication.playSound("gui");
 				}
 			}
 		});
@@ -76,8 +88,8 @@ public class HomeScreen{
 		gc.setFill(Color.BLACK);
 		gc.fillRect(0, 0, WIDTH, HEIGHT);
 		
-		gc.setStroke(Color.WHITE);
-		gc.strokeRect(this.playButton.getMinX(), this.playButton.getMinY(), this.playButton.getWidth(), this.playButton.getHeight());
+		//gc.setStroke(Color.WHITE);
+		gc.drawImage(PLAY_BUTTON, this.playButton.getMinX(), this.playButton.getMinY(), this.playButton.getWidth(), this.playButton.getHeight());
 		
 		for (Slider slider : this.sliders){
 			slider.render(gc);
