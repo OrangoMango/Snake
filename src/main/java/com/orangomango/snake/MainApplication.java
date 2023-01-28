@@ -30,7 +30,7 @@ public class MainApplication extends Application{
 	
 	public static void playSound(String sound){
 		new Thread(() -> {
-			MediaPlayer player = new MediaPlayer(sounds.get(sound));
+			AudioClip player = new AudioClip(sounds.get(sound).getSource());
 			player.play();
 		}).start();
 	}
