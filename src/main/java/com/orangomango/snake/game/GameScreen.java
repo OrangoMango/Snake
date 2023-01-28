@@ -227,7 +227,7 @@ public class GameScreen{
 		
 		for (int i = 0; i < this.snake.size(); i++){
 			SnakeBody sb = this.snake.get(i);
-			sb.render(gc, i == 0);
+			sb.render(gc, (double)i/this.snake.size());
 			this.gameWorld.set(sb.x, sb.y);
 		}
 		this.apple.render(gc);

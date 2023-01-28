@@ -13,8 +13,8 @@ public class SnakeBody{
 		this.y = y;
 	}
 	
-	public void render(GraphicsContext gc, boolean first){
-		gc.setFill(first ? Color.DARKGREEN : Color.GREEN);
+	public void render(GraphicsContext gc, double p){
+		gc.setFill(Color.color(p, 1, p));
 		gc.fillRect(this.x*SIZE, this.y*SIZE, SIZE, SIZE);
 	}
 	

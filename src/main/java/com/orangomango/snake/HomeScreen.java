@@ -9,19 +9,23 @@ import javafx.animation.*;
 import javafx.util.Duration;
 import javafx.geometry.Rectangle2D;
 
+import java.util.*;
+
 import com.orangomango.snake.game.GameScreen;
 
 public class HomeScreen{
-	private static final int WIDTH = 720;
-	private static final int HEIGHT = 480;
+	public static final int WIDTH = 720;
+	public static final int HEIGHT = 480;
 	private static final int FPS = 40;
 	
 	private Stage stage;
 	private Rectangle2D playButton;
+	private List<Slider> sliders = new ArrayList<>();
+	private List<Checkbox> checkboxes = new ArrayList<>();
 	
 	public HomeScreen(Stage stage){
 		this.stage = stage;
-		this.playButton = new Rectangle2D(100, 150, 200, 75);
+		this.playButton = new Rectangle2D(0.15*WIDTH, 0.3*HEIGHT, 0.3*WIDTH, 0.15*HEIGHT);
 	}
 	
 	public Scene getScene(){
@@ -32,13 +36,33 @@ public class HomeScreen{
 		gc.fillRect(0, 0, WIDTH, HEIGHT);
 		pane.getChildren().add(canvas);
 		
+		this.sliders.add(new Slider(0.57*WIDTH, 0.2*HEIGHT, 5, 60, 25));
+		this.sliders.add(new Slider(0.57*WIDTH, 0.38*HEIGHT, 45, 500, 150));
+		
+		this.checkboxes.add(new Checkbox(0.43*WIDTH, 0.6*HEIGHT, "AI (F2 to toggle)"));
+		this.checkboxes.add(new Checkbox(0.43*WIDTH, 0.75*HEIGHT, "Wrapping"));
+		
 		Timeline loop = new Timeline(new KeyFrame(Duration.millis(1000.0/FPS), e -> update(gc)));
 		canvas.setOnMousePressed(e -> {
 			if (this.playButton.contains(e.getX(), e.getY())){
 				loop.stop();
 				boolean ai = false;
-				GameScreen gs = new GameScreen(this.stage, 25, 200, ai, false);
+				GameScreen gs = new GameScreen(this.stage, this.sliders.get(0).getValue(), this.sliders.get(1).getValue(), this.checkboxes.get(0).isSelected(), this.checkboxes.get(1).isSelected());
 				this.stage.setScene(gs.getScene());
+			} else {
+				for (Checkbox box : this.checkboxes){
+					if (box.contains(e.getX(), e.getY())){
+						box.toggle();
+					}
+				}
+			}
+		});
+		canvas.setOnMouseDragged(e -> {
+			for (Slider slider : this.sliders){
+				double cursor = slider.contains(e.getX(), e.getY());
+				if (cursor >= 0){
+					slider.updateCursor(cursor);
+				}
 			}
 		});
 		loop.setCycleCount(Animation.INDEFINITE);
@@ -54,5 +78,13 @@ public class HomeScreen{
 		
 		gc.setStroke(Color.WHITE);
 		gc.strokeRect(this.playButton.getMinX(), this.playButton.getMinY(), this.playButton.getWidth(), this.playButton.getHeight());
+		
+		for (Slider slider : this.sliders){
+			slider.render(gc);
+		}
+		
+		for (Checkbox box : this.checkboxes){
+			box.render(gc);
+		}
 	}
 }
