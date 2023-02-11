@@ -37,12 +37,13 @@ public class GameScreen{
 	private boolean ai, wrap;
 	private boolean threadRunning = true;
 	private Timeline loop;
+	private Apple targetCell;
 	
 	public GameScreen(Stage stage, int size, int timeInterval, boolean ai, boolean wrap){
 		Thread counter = new Thread(() -> {
 			while (this.threadRunning){
 				try {
-					this.fps = Math.min(this.frames, FPS);
+					this.fps = this.frames;
 					this.frames = 0;
 					Thread.sleep(1000);
 				} catch (InterruptedException ex){
@@ -269,21 +270,30 @@ public class GameScreen{
 
 		if (this.ai){
 			SnakeBody head = snake.get(0);
-			//SnakeBody next = getNext(head);
+			SnakeBody nextMove = getNext(head);
 			PathFinder pf = new PathFinder(this.gameWorld, head.x, head.y, apple.x, apple.y);
 			//pf.render(gc, false);
 			Cell cell = pf.iterator().hasNext() ? pf.iterator().next() : null;
 			if (cell != null){
+				//if (targetCell != null) this.timeInterval /= 2;
+				targetCell = null;
 				setDirection(cell, head);
-			} else {
+			} else if (targetCell == null || (targetCell != null && nextMove.x == targetCell.x && nextMove.y == targetCell.y)){
 				List<Apple> cells = getCells(head.x, head.y);
 				Cell next = null;
 				int i = 0;
 				do {
-					pf = new PathFinder(this.gameWorld, head.x, head.y, cells.get(i).x, cells.get(i).y);
+					targetCell = cells.get(i);
+					pf = new PathFinder(this.gameWorld, head.x, head.y, targetCell.x, targetCell.y);
 					next = pf.iterator().hasNext() ? pf.iterator().next() : null;
 					i++;
 				} while (next == null && i < cells.size());
+				//this.timeInterval *= 2;
+				if (next != null) setDirection(next, head);
+			} else {
+				pf = new PathFinder(this.gameWorld, head.x, head.y, targetCell.x, targetCell.y);
+				//pf.render(gc, false);
+				Cell next = pf.iterator().hasNext() ? pf.iterator().next() : null;
 				if (next != null) setDirection(next, head);
 			}
 		}
