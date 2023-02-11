@@ -10,6 +10,7 @@ import javafx.animation.*;
 import javafx.scene.input.KeyCode;
 import javafx.util.Duration;
 import javafx.geometry.Side;
+import javafx.geometry.Point2D;
 
 import java.util.*;
 
@@ -61,7 +62,7 @@ public class GameScreen{
 	
 	public Scene getScene(){
 		StackPane pane = new StackPane();
-		Canvas canvas = new Canvas(WIDTH, HEIGHT);
+		Canvas canvas = new Canvas(WIDTH-WIDTH%SnakeBody.SIZE, HEIGHT-HEIGHT%SnakeBody.SIZE);
 		canvas.setFocusTraversable(true);
 		canvas.setOnKeyPressed(e -> this.keys.put(e.getCode(), true));
 		canvas.setOnKeyReleased(e -> this.keys.put(e.getCode(), false));
@@ -77,7 +78,7 @@ public class GameScreen{
 		this.gameWorld = new GameWorld(WIDTH/SnakeBody.SIZE, HEIGHT/SnakeBody.SIZE);
 		snake.add(new SnakeBody(6, 5));
 		snake.add(new SnakeBody(5, 5));
-		generateApple();
+		generateApple(getNext(snake.get(0)));
 		
 		AnimationTimer timer = new AnimationTimer(){
 			@Override
@@ -112,7 +113,7 @@ public class GameScreen{
 					if (next.x == apple.x && next.y == apple.y){
 						this.score++;
 						MainApplication.playSound("point");
-						generateApple();
+						generateApple(next);
 					} else if (!dead){
 						snake.remove(snake.size()-1);
 					}
@@ -171,15 +172,41 @@ public class GameScreen{
 		}
 		this.score = 0;
 		MainApplication.playSound("gameStart");
-		generateApple();
+		generateApple(getNext(snake.get(0)));
 	}
 	
-	private void generateApple(){
+	private List<Apple> getCells(int x, int y){
+		List<Apple> output = new ArrayList<>();
+		for (int i = 0; i < WIDTH/(int)Apple.SIZE; i++){
+			for (int j = 0; j < HEIGHT/(int)Apple.SIZE; j++){
+				boolean ok = true;
+				for (int k = 0; k < this.snake.size(); k++){
+					SnakeBody sb = this.snake.get(k);
+					if (sb.x == i && sb.y == j){
+						ok = false;
+						break;
+					}
+				}
+				if (ok){
+					output.add(new Apple(i, j));
+				}
+			}
+		}
+		Point2D start = new Point2D(x, y);
+		output.sort((a, b) -> {
+			double distance1 = start.distance(new Point2D(a.x, a.y));
+			double distance2 = start.distance(new Point2D(b.x, b.y));
+			return -Double.compare(distance1, distance2);
+		});
+		return output;
+	}
+	
+	private void generateApple(SnakeBody next){
 		Apple apple = new Apple(random.nextInt(WIDTH/(int)Apple.SIZE), random.nextInt(HEIGHT/(int)Apple.SIZE));
 		for (int i = 0; i < this.snake.size(); i++){
 			SnakeBody sb = this.snake.get(i);
-			if (sb.x == apple.x && sb.y == apple.y){
-				generateApple();
+			if ((sb.x == apple.x && sb.y == apple.y) || (next.x == apple.x && next.y == apple.y)){
+				generateApple(next);
 				return;
 			}
 		}
@@ -242,12 +269,22 @@ public class GameScreen{
 
 		if (this.ai){
 			SnakeBody head = snake.get(0);
-			SnakeBody next = getNext(head);
+			//SnakeBody next = getNext(head);
 			PathFinder pf = new PathFinder(this.gameWorld, head.x, head.y, apple.x, apple.y);
 			//pf.render(gc, false);
 			Cell cell = pf.iterator().hasNext() ? pf.iterator().next() : null;
 			if (cell != null){
 				setDirection(cell, head);
+			} else {
+				List<Apple> cells = getCells(head.x, head.y);
+				Cell next = null;
+				int i = 0;
+				do {
+					pf = new PathFinder(this.gameWorld, head.x, head.y, cells.get(i).x, cells.get(i).y);
+					next = pf.iterator().hasNext() ? pf.iterator().next() : null;
+					i++;
+				} while (next == null && i < cells.size());
+				if (next != null) setDirection(next, head);
 			}
 		}
 		

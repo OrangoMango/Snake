@@ -86,7 +86,7 @@ public class PathFinder implements Iterable<Cell>{
 				currentCell = openCells.get(bestCellIndex);
 				endReached = currentCell.end;
 			} else {
-				throw new IllegalStateException("Unreachable end");
+				break;
 			}
 		}
 
