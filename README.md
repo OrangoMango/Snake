@@ -1,5 +1,7 @@
 # Snake
 Snake game (Bot included) using A* pathfinding algorithm.
+# Platforms
+Windows, Linux, Mac, Android and [browser](https://orangomango.itch.io/snake).
 # Itch.io
 https://orangomango.itch.io/snake
 # Screenshot
