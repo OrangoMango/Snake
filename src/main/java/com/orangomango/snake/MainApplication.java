@@ -3,6 +3,7 @@ package com.orangomango.snake;
 import javafx.application.Application;
 import javafx.stage.Stage;
 import javafx.scene.media.*;
+import javafx.scene.image.Image;
 
 import java.util.*;
 
@@ -20,6 +21,7 @@ public class MainApplication extends Application{
 	@Override
 	public void start(Stage stage){
 		stage.setTitle("Snake");
+		stage.getIcons().add(new Image(MainApplication.class.getResourceAsStream("/icon.png")));
 
 		HomeScreen hs = new HomeScreen(stage);
 		
