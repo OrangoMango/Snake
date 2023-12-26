@@ -16,6 +16,7 @@ import java.util.*;
 
 import com.orangomango.snake.HomeScreen;
 import com.orangomango.snake.MainApplication;
+//import com.orangomango.snake.game.pathfinder.*;
 
 public class GameScreen{
 	private static final int WIDTH = 720;
@@ -214,7 +215,7 @@ public class GameScreen{
 		this.apple = apple;
 	}
 	
-	private void setDirection(Cell cell, SnakeBody head){
+	/*private void setDirection(Cell cell, SnakeBody head){
 		if (cell.getX() > head.x && this.snakeDirection != Side.LEFT){
 			this.direction = Side.RIGHT;
 		}
@@ -227,7 +228,7 @@ public class GameScreen{
 		if (cell.getY() < head.y && this.snakeDirection != Side.BOTTOM){
 			this.direction = Side.TOP;
 		}
-	}
+	}*/
 	
 	private void update(GraphicsContext gc){
 		gc.clearRect(0, 0, WIDTH, HEIGHT);
@@ -269,13 +270,14 @@ public class GameScreen{
 		this.apple.render(gc);
 
 		if (this.ai){
-			SnakeBody head = snake.get(0);
+			// ...
+
+			// A* Pathfinding algorithm
+			/*SnakeBody head = snake.get(0);
 			SnakeBody nextMove = getNext(head);
 			PathFinder pf = new PathFinder(this.gameWorld, head.x, head.y, apple.x, apple.y);
-			//pf.render(gc, false);
 			Cell cell = pf.iterator().hasNext() ? pf.iterator().next() : null;
 			if (cell != null){
-				//if (targetCell != null) this.timeInterval /= 2;
 				targetCell = null;
 				setDirection(cell, head);
 			} else if (targetCell == null || (targetCell != null && nextMove.x == targetCell.x && nextMove.y == targetCell.y)){
@@ -288,14 +290,12 @@ public class GameScreen{
 					next = pf.iterator().hasNext() ? pf.iterator().next() : null;
 					i++;
 				} while (next == null && i < cells.size());
-				//this.timeInterval *= 2;
 				if (next != null) setDirection(next, head);
 			} else {
 				pf = new PathFinder(this.gameWorld, head.x, head.y, targetCell.x, targetCell.y);
-				//pf.render(gc, false);
 				Cell next = pf.iterator().hasNext() ? pf.iterator().next() : null;
 				if (next != null) setDirection(next, head);
-			}
+			}*/
 		}
 		
 		gc.setFill(Color.WHITE);

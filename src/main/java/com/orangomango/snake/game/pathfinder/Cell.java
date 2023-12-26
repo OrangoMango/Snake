@@ -1,7 +1,9 @@
-package com.orangomango.snake.game;
+package com.orangomango.snake.game.pathfinder;
 
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
+
+import com.orangomango.snake.game.SnakeBody;
 
 public class Cell{
 	private int x, y;

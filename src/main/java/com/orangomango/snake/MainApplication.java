@@ -6,6 +6,9 @@ import javafx.scene.media.*;
 
 import java.util.*;
 
+// DEBUG
+import com.orangomango.snake.game.GameWorld;
+
 public class MainApplication extends Application{
 	private static Map<String, Media> sounds = new HashMap<>();
 	
@@ -36,6 +39,9 @@ public class MainApplication extends Application{
 	}
 	
 	public static void main(String[] args){
-		launch(args);
+		//launch(args);
+		GameWorld world = new GameWorld(12, 8);
+
+		System.exit(0);
 	}
 }

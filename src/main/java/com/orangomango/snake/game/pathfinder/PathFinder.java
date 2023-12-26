@@ -1,9 +1,11 @@
-package com.orangomango.snake.game;
+package com.orangomango.snake.game.pathfinder;
 
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
 
 import java.util.*;
+
+import com.orangomango.snake.game.GameWorld;
 
 public class PathFinder implements Iterable<Cell>{
 	private final int startX, startY, endX, endY;
@@ -118,7 +120,7 @@ public class PathFinder implements Iterable<Cell>{
 		}
 	}
 	
-	public void render(GraphicsContext gc, boolean showText){
+	/*public void render(GraphicsContext gc, boolean showText){
 		if (!showText) gc.setGlobalAlpha(0.3);
 		for (int i = 0; i < map.length; i++){
 			for (int j = 0; j < map[0].length; j++){
@@ -126,5 +128,5 @@ public class PathFinder implements Iterable<Cell>{
 			}
 		}
 		gc.setGlobalAlpha(1);
-	}
+	}*/
 }
