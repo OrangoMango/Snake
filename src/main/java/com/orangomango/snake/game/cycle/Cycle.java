@@ -13,6 +13,7 @@ public class Cycle{
 	private int[][] map;
 	private List<Point> currentLoop;
 	private Point startPoint;
+	private Map<Point, Integer> indices = new HashMap<>();
 	private static final Map<Integer, int[]> ARCS = new HashMap<>();
 
 	static {
@@ -44,6 +45,27 @@ public class Cycle{
 		} else if (this.width % 2 == 0){
 			this.map[this.startPoint.x][this.startPoint.y] |= 8;
 		}
+
+		Point current = this.startPoint;
+		int count = 0;
+		do {
+			indices.put(current, count++);
+
+			int dx = this.map[current.x][current.y];
+			if ((dx & 8) == 8){
+				current = new Point(current.x+ARCS.get(8)[0], current.y+ARCS.get(8)[1]);
+			} else if ((dx & 4) == 4){
+				current = new Point(current.x+ARCS.get(4)[0], current.y+ARCS.get(4)[1]);
+			} else if ((dx & 2) == 2){
+				current = new Point(current.x+ARCS.get(2)[0], current.y+ARCS.get(2)[1]);
+			} else if ((dx & 1) == 1){
+				current = new Point(current.x+ARCS.get(1)[0], current.y+ARCS.get(1)[1]);
+			}
+		} while (!current.equals(this.startPoint));
+	}
+
+	public int getIndex(int x, int y){
+		return this.indices.get(new Point(x, y));
 	}
 
 	public Cell getNextCell(int x, int y, Side direction){
@@ -228,9 +250,7 @@ public class Cycle{
 				return 8;
 			}
 			if (x == 0){
-				if (y == 0){
-					return 6;
-				} else if (y != this.height-1){
+				if (y != this.height-1){
 					return 2;
 				}
 			}
@@ -303,6 +323,9 @@ public class Cycle{
 					gc.setStroke(Color.BLUE);
 					gc.strokeLine((x+0.5)*size, (y+0.5)*size, x*size, (y+0.5)*size);
 				}
+
+				gc.setFill(Color.BLACK);
+				gc.fillText(Integer.toString(getIndex(x, y)), (x+0.2)*size, (y+0.5)*size);
 			}
 		}
 		gc.restore();

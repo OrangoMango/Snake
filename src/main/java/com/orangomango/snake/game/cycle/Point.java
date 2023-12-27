@@ -1,5 +1,7 @@
 package com.orangomango.snake.game.cycle;
 
+import java.util.Objects;
+
 public class Point{
 	public int x, y;
 
@@ -14,5 +16,10 @@ public class Point{
 			Point p = (Point)other;
 			return this.x == p.x && this.y == p.y;
 		} else return false;
+	}
+
+	@Override
+	public int hashCode(){
+		return Objects.hash(this.x, this.y);
 	}
 }

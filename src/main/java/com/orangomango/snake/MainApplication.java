@@ -38,8 +38,8 @@ public class MainApplication extends Application{
 	public static void main(String[] args){
 		launch(args);
 
-		/*com.orangomango.snake.game.cycle.Cycle cycle = new com.orangomango.snake.game.cycle.Cycle(16, 11);
-		cycle.generate(0);
+		/*com.orangomango.snake.game.cycle.Cycle cycle = new com.orangomango.snake.game.cycle.Cycle(11, 16);
+		cycle.generate(150);
 		cycle.print();
 		System.exit(0);*/
 	}

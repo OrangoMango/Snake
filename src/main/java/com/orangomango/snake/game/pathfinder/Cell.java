@@ -8,8 +8,7 @@ import com.orangomango.snake.game.SnakeBody;
 public class Cell{
 	private int x, y;
 	public boolean start, end;
-	public boolean visited, open, solid, path;
-	public int fCost, gCost, hCost;
+	public boolean visited, solid, path, marked, soft;
 	public Cell parent;
 
 	public Cell(int x, int y, boolean solid){
@@ -32,6 +31,7 @@ public class Cell{
 
 	public void setEnd(){
 		this.end = true;
+		this.solid = false;
 	}
 	
 	public void render(GraphicsContext gc, boolean showText){
@@ -44,9 +44,6 @@ public class Cell{
 			color = Color.WHITE;
 		}
 
-		if (open){
-			color = Color.YELLOW;
-		}
 		if (visited){
 			color = Color.ORANGE;
 		}
@@ -60,10 +57,12 @@ public class Cell{
 			color = Color.CYAN;
 		}
 
+		if (this.marked) color = Color.RED;
+
 		gc.setFill(color);
 		gc.fillRect(this.x*SnakeBody.SIZE, this.y*SnakeBody.SIZE, SnakeBody.SIZE, SnakeBody.SIZE);
 		gc.setFill(Color.BLACK);
-		if (showText) gc.fillText(String.format("F: %s\nH: %s", fCost, hCost), this.x*SnakeBody.SIZE, this.y*SnakeBody.SIZE+SnakeBody.SIZE/2);
+		if (showText) gc.fillText(this.toString(), this.x*SnakeBody.SIZE, this.y*SnakeBody.SIZE+SnakeBody.SIZE/2);
 	}
 	
 	@Override

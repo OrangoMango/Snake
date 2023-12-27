@@ -10,8 +10,14 @@ public class GameWorld{
 	public GameWorld(int w, int h){
 		this.w = w;
 		this.h = h;
-		this.map = new boolean[w][h];
-		this.cycle = new Cycle(w, h);
+
+		// Fix width and height
+		if (this.w % 2 == 1 && this.h % 2 == 1){
+			this.w--;
+		}
+
+		this.map = new boolean[this.w][this.h];
+		this.cycle = new Cycle(this.w, this.h);
 		this.cycle.generate(250);
 	}
 
