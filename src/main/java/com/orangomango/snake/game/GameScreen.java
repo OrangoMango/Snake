@@ -16,7 +16,8 @@ import java.util.*;
 
 import com.orangomango.snake.HomeScreen;
 import com.orangomango.snake.MainApplication;
-//import com.orangomango.snake.game.pathfinder.*;
+import com.orangomango.snake.game.pathfinder.*;
+import com.orangomango.snake.game.cycle.Cycle;
 
 public class GameScreen{
 	private static final int WIDTH = 720;
@@ -208,14 +209,18 @@ public class GameScreen{
 		for (int i = 0; i < this.snake.size(); i++){
 			SnakeBody sb = this.snake.get(i);
 			if ((sb.x == apple.x && sb.y == apple.y) || (next.x == apple.x && next.y == apple.y)){
-				generateApple(next);
+				if (this.gameWorld.isBoardFull()){
+					resetGame();
+				} else {
+					generateApple(next);
+				}
 				return;
 			}
 		}
 		this.apple = apple;
 	}
 	
-	/*private void setDirection(Cell cell, SnakeBody head){
+	private void setDirection(Cell cell, SnakeBody head){
 		if (cell.getX() > head.x && this.snakeDirection != Side.LEFT){
 			this.direction = Side.RIGHT;
 		}
@@ -228,12 +233,12 @@ public class GameScreen{
 		if (cell.getY() < head.y && this.snakeDirection != Side.BOTTOM){
 			this.direction = Side.TOP;
 		}
-	}*/
+	}
 	
 	private void update(GraphicsContext gc){
 		gc.clearRect(0, 0, WIDTH, HEIGHT);
 		this.gameWorld.clear();
-		gc.setFill(Color.BLACK);
+		gc.setFill(Color.web("#31FFB2"));
 		gc.fillRect(0, 0, WIDTH, HEIGHT);
 		
 		if (keys.getOrDefault(KeyCode.UP, false) && this.snakeDirection != Side.BOTTOM){
@@ -264,17 +269,20 @@ public class GameScreen{
 		
 		for (int i = 0; i < this.snake.size(); i++){
 			SnakeBody sb = this.snake.get(i);
-			sb.render(gc, (double)i/this.snake.size());
+			sb.render(gc, i == 0, i == this.snake.size()-1 ? null : this.snake.get(i+1), i == 0 ? null : this.snake.get(i-1));
 			this.gameWorld.set(sb.x, sb.y);
 		}
 		this.apple.render(gc);
 
 		if (this.ai){
-			// ...
+			SnakeBody head = snake.get(0);
+			Cycle cycle = this.gameWorld.getCycle();
+			if (this.showInfo) cycle.render(gc, SnakeBody.SIZE);
+			Cell cell = cycle.getNextCell(head.x, head.y, this.snakeDirection);
+			setDirection(cell, head);
 
 			// A* Pathfinding algorithm
-			/*SnakeBody head = snake.get(0);
-			SnakeBody nextMove = getNext(head);
+			/*SnakeBody nextMove = getNext(head);
 			PathFinder pf = new PathFinder(this.gameWorld, head.x, head.y, apple.x, apple.y);
 			Cell cell = pf.iterator().hasNext() ? pf.iterator().next() : null;
 			if (cell != null){

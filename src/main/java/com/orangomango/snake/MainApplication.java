@@ -6,9 +6,6 @@ import javafx.scene.media.*;
 
 import java.util.*;
 
-// DEBUG
-import com.orangomango.snake.game.GameWorld;
-
 public class MainApplication extends Application{
 	private static Map<String, Media> sounds = new HashMap<>();
 	
@@ -39,9 +36,11 @@ public class MainApplication extends Application{
 	}
 	
 	public static void main(String[] args){
-		//launch(args);
-		GameWorld world = new GameWorld(12, 8);
+		launch(args);
 
-		System.exit(0);
+		/*com.orangomango.snake.game.cycle.Cycle cycle = new com.orangomango.snake.game.cycle.Cycle(16, 11);
+		cycle.generate(0);
+		cycle.print();
+		System.exit(0);*/
 	}
 }

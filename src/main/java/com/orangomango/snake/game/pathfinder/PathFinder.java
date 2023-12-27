@@ -120,7 +120,8 @@ public class PathFinder implements Iterable<Cell>{
 		}
 	}
 	
-	/*public void render(GraphicsContext gc, boolean showText){
+	// Debug
+	public void render(GraphicsContext gc, boolean showText){
 		if (!showText) gc.setGlobalAlpha(0.3);
 		for (int i = 0; i < map.length; i++){
 			for (int j = 0; j < map[0].length; j++){
@@ -128,5 +129,5 @@ public class PathFinder implements Iterable<Cell>{
 			}
 		}
 		gc.setGlobalAlpha(1);
-	}*/
+	}
 }

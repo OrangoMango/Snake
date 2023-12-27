@@ -1,191 +1,310 @@
 package com.orangomango.snake.game.cycle;
 
+import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.paint.Color;
+import javafx.geometry.Side;
+
 import java.util.*;
 
-import com.orangomango.snake.game.GameWorld;
+import com.orangomango.snake.game.pathfinder.Cell;
 
 public class Cycle{
-	private Tile startTile;
+	private int width, height;
+	private int[][] map;
+	private List<Point> currentLoop;
+	private Point startPoint;
+	private static final Map<Integer, int[]> ARCS = new HashMap<>();
 
-	public Cycle(GameWorld world){
-		Random random = new Random();
-		final int[][] directions = new int[][]{{0, -1}, {1, 0}, {0, 1}, {-1, 0}};
-		Tile[][] map = new Tile[world.getWidth()][world.getHeight()];
-		for (int x = 0; x < map.length; x++){
-			for (int y = 0; y < map[x].length; y++){
-				map[x][y] = new Tile(x, y);
-			}
-		}
-		this.startTile = map[0][0];
-
-		List<List<Tile>> paths = findPath(map, this.startTile, this.startTile);
-		System.out.println(paths.size());
-		paths.stream().forEach(System.out::println);
-		System.out.println();
-
-		/*for (int i = 0; i < paths.size(); i++){
-			List<Tile> path = paths.get(i);
-			System.out.format("Path %d: %s", i, path);
-			List<Tile> visited = new ArrayList<>();
-			for (int j = 0; j < path.size(); j++){
-				Tile tile = path.get(j);
-				visited.add(tile);
-				for (int y = 0; y < map[0].length; y++){
-					for (int x = 0; x < map.length; x++){
-						System.out.print(visited.contains(map[x][y]) ? "#" : ".");
-					}
-					System.out.println();
-				}
-				System.out.println();
-				try {
-					Thread.sleep(100);
-				} catch (InterruptedException ex){
-					ex.printStackTrace();
-				}
-			}
-		}*/
+	static {
+		ARCS.put(8, new int[]{0, -1});
+		ARCS.put(4, new int[]{1, 0});
+		ARCS.put(2, new int[]{0, 1});
+		ARCS.put(1, new int[]{-1, 0});
 	}
 
-	private List<List<Tile>> findPath(Tile[][] map, Tile tile, Tile endTile){
-		tile.visited = true;
-		List<List<Tile>> output = new ArrayList<>();
-
-		// Debug
-		try { Thread.sleep(150); } catch (InterruptedException ex){}
-		for (int y = 0; y < map[0].length; y++){
-			for (int x = 0; x < map.length; x++){
-				Tile t = map[x][y];
-				System.out.print(t == tile ? "x" : (t.visited ? "o" : "."));
-			}
-			System.out.println();
-		}
-		System.out.println();
-
-		Tile n = getTileAt(map, tile.getX(), tile.getY()-1);
-		Tile e = getTileAt(map, tile.getX()+1, tile.getY());
-		Tile s = getTileAt(map, tile.getX(), tile.getY()+1);
-		Tile w = getTileAt(map, tile.getX()-1, tile.getY());
-
-		Tile[] selection = new Tile[]{n, e, s, w};
-		int[] selectedTiles = new int[4];
-		Random random = new Random();
-		do {
-			int pos = random.nextInt(4);
-			if (selectedTiles[pos] == 0){
-				selectedTiles[pos] = 1;
-				Tile selected = selection[pos];
-				if (selected != null && ((!selected.visited && isAcceptable(selected, map, endTile)) || selected == endTile)){
-					if (selected == endTile){
-						if (allVisited(map)){
-							List<Tile> temp = new ArrayList<>();
-							temp.add(tile);
-							temp.add(selected);
-							output.add(temp);
-							break; // Only one solution is needed
-						}
-					} else {
-						List<List<Tile>> result = findPath(map, selected, endTile);
-						for (List<Tile> list : result){
-							List<Tile> temp = new ArrayList<>();
-							temp.add(tile);
-							temp.addAll(list);
-							output.add(temp);
-						}
-
-						// Only one solution is needed
-						if (result.stream().flatMap(l -> l.stream()).filter(t -> t == endTile).findAny().isPresent()){
-							break;
-						}
-					}
-				}
-			}
-		} while (selectedTiles[0]*selectedTiles[1]*selectedTiles[2]*selectedTiles[3] == 0); // The product is 0 if there is a 0 in the array
-
-		tile.visited = false;
-		return output;
+	public Cycle(int w, int h){
+		this.width = w;
+		this.height = h;
+		this.map = new int[w][h];
+		buildInitialMap();
 	}
 
-	private static boolean isAcceptable(Tile tile, Tile[][] map, Tile ref){
-		// All tiles that have not been visited that are "connected" to the reference tile
-		/*List<Tile> available = new ArrayList<>();
-		List<Tile> visited = new ArrayList<>();
-		available.add(ref);
-		tile.visited = true; // Visit this tile temporary
-		while (available.size() != 0){
-			Tile t = available.remove(0);
-			if (visited.contains(t)) continue;
-			visited.add(t);
-
-			Tile n = getTileAt(map, t.getX(), t.getY()-1);
-			Tile e = getTileAt(map, t.getX()+1, t.getY());
-			Tile s = getTileAt(map, t.getX(), t.getY()+1);
-			Tile w = getTileAt(map, t.getX()-1, t.getY());
-			if (n != null && !n.visited && !visited.contains(n)) available.add(n);
-			if (e != null && !e.visited && !visited.contains(e)) available.add(e);
-			if (s != null && !s.visited && !visited.contains(s)) available.add(s);
-			if (w != null && !w.visited && !visited.contains(w)) available.add(w);
-		}
-
-		List<Tile> emptyTiles = new ArrayList<>();
-		for (int x = 0; x < map.length; x++){
-			for (int y = 0; y < map[x].length; y++){
-				if (!map[x][y].visited){
-					emptyTiles.add(map[x][y]);
-				}
+	public void generate(int n){
+		for (int i = 0; i < n; i++){
+			Point[] sp = split();
+			if (sp != null){
+				modifyPath(sp);
+				Point[] tu = mend(sp);
+				modifyPath(tu);
 			}
 		}
 
-		//System.out.format("Visited size: %d\tEmpty tiles: %d\n", visited.size(), emptyTiles.size());
-
-		tile.visited = false;
-		return emptyTiles.size() == visited.size()-1;*/
-
-		return true;
-	}
-
-	private static boolean allVisited(Tile[][] map){
-		for (int x = 0; x < map.length; x++){
-			for (int y = 0; y < map[x].length; y++){
-				if (!map[x][y].visited) return false;
-			}
+		if (this.height % 2 == 0){
+			this.map[this.startPoint.x][this.startPoint.y] |= 4;
+		} else if (this.width % 2 == 0){
+			this.map[this.startPoint.x][this.startPoint.y] |= 8;
 		}
-
-		return true;
 	}
 
-	private static Tile getTileAt(Tile[][] map, int x, int y){
-		if (x >= 0 && y >= 0 && x < map.length && y < map[0].length){
-			return map[x][y];
+	public Cell getNextCell(int x, int y, Side direction){
+		int dx = this.map[x][y];
+		if ((dx & 8) == 8 && direction != Side.BOTTOM){
+			return new Cell(x+ARCS.get(8)[0], y+ARCS.get(8)[1], false);
+		} else if ((dx & 4) == 4 && direction != Side.LEFT){
+			return new Cell(x+ARCS.get(4)[0], y+ARCS.get(4)[1], false);
+		} else if ((dx & 2) == 2 && direction != Side.TOP){
+			return new Cell(x+ARCS.get(2)[0], y+ARCS.get(2)[1], false);
+		} else if ((dx & 1) == 1 && direction != Side.RIGHT){
+			return new Cell(x+ARCS.get(1)[0], y+ARCS.get(1)[1], false);
 		} else return null;
 	}
 
-	public Tile getStartTile(){
-		return this.startTile; // Temp
+	private void modifyPath(Point[] spl){
+		int pta = this.map[spl[0].x][spl[0].y];
+		int ptb = this.map[spl[1].x][spl[1].y];
+		if (pta == 8 || pta == 2){
+			if (spl[0].x < spl[1].x){
+				pta = 4;
+				ptb = 1;
+			} else {
+				pta = 1;
+				ptb = 4;
+			}
+		} else {
+			if (spl[0].y < spl[1].y){
+				pta = 2;
+				ptb = 8;
+			} else {
+				pta = 8;
+				ptb = 2;
+			}
+		}
+
+		this.map[spl[0].x][spl[0].y] = pta;
+		this.map[spl[1].x][spl[1].y] = ptb;
 	}
 
-	// DEBUG
-	/*public void print(GameWorld world){
-		String[][] map = new String[world.getWidth()][world.getHeight()];
-		Tile currentTile = this.startTile;
-		while (currentTile != null){
-			Tile parent = this.startTile.parent;
-			if (parent.getY()-currentTile.getY() == -1){
-				map[currentTile.getX()][currentTile.getY()] = "^";
-			} else if (parent.getX()-currentTile.getX() == 1){
-				map[currentTile.getX()][currentTile.getY()] = ">";
-			} else if (parent.getY()-currentTile.getY() == 1){
-				map[currentTile.getX()][currentTile.getY()] = "v";
-			} else if (parent.getX()-currentTile.getX() == -1){
-				map[currentTile.getX()][currentTile.getY()] = "<";
+	private Point move(Point point){
+		if (isInside(point)){
+			int[] d = ARCS.get(this.map[point.x][point.y]);
+			if (d != null){
+				Point moved = new Point(point.x+d[0], point.y+d[1]);
+				if (isInside(moved)){
+					return moved;
+				}
 			}
-			currentTile = parent;
 		}
 
-		for (int y = 0; y < map[0].length; y++){
-			for (int x = 0; x < map.length; x++){
-				System.out.print(map[x][y]);
-			}
-			System.out.println();
+		return null;
+	}
+
+	private boolean setLoop(Point start, Point stop){
+		this.currentLoop = new ArrayList<>();
+		Point point = start;
+		while (point != null && this.currentLoop.size() <= this.width*this.height && !point.equals(stop)){
+			point = move(point);
+			this.currentLoop.add(point);
 		}
-	}*/
+
+		return point != null && point.equals(stop);
+	}
+
+	private Point[] split(){
+		List<Pair<Point, Point>> candidates = new ArrayList<>();
+		for (int x = 0; x < this.width; x++){
+			for (int y = 0; y < this.height; y++){
+				Point pt = new Point(x, y);
+				int dx = this.map[x][y];
+				if (dx == 8){
+					Point cx = new Point(x+1, y-1);
+					if (isInside(cx) && this.map[cx.x][cx.y] == 2){
+						candidates.add(new Pair<>(pt, cx));
+					}
+				} else if (dx == 2){
+					Point cx = new Point(x+1, y+1);
+					if (isInside(cx) && this.map[cx.x][cx.y] == 8){
+						candidates.add(new Pair<>(pt, cx));
+					}
+				} else if (dx == 4){
+					Point cx = new Point(x+1, y+1);
+					if (isInside(cx) && this.map[cx.x][cx.y] == 1){
+						candidates.add(new Pair<>(pt, cx));
+					}
+				} else if (dx == 1){
+					Point cx = new Point(x-1, y+1);
+					if (isInside(cx) && this.map[cx.x][cx.y] == 4){
+						candidates.add(new Pair<>(pt, cx));
+					}
+				}
+			}
+		}
+
+		if (candidates.size() > 0){
+			Random random = new Random();
+			Pair<Point, Point> pair = candidates.get(random.nextInt(candidates.size()));
+			if (setLoop(pair.a, pair.b)){
+				return new Point[]{pair.a, pair.b};
+			} else if (setLoop(pair.b, pair.a)){
+				return new Point[]{pair.b, pair.a};
+			}
+		}
+
+		return null;
+	}
+
+	private Point[] mend(Point[] sp){
+		List<Pair<Point, Point>> candidates = new ArrayList<>();
+		for (int x = 0; x < this.width; x++){
+			for (int y = 0; y < this.height; y++){
+				Point pt = new Point(x, y);
+				int dx = this.map[x][y];
+				boolean lx = this.currentLoop.contains(pt);
+				if (dx == 8){
+					Point cx = new Point(x+1, y-1);
+					boolean rx = this.currentLoop.contains(cx);
+					if (isInside(cx) && this.map[cx.x][cx.y] == 2 && rx != lx){
+						candidates.add(new Pair<>(pt, cx));
+					}
+				} else if (dx == 2){
+					Point cx = new Point(x+1, y+1);
+					boolean rx = this.currentLoop.contains(cx);
+					if (isInside(cx) && this.map[cx.x][cx.y] == 8 && rx != lx){
+						candidates.add(new Pair<>(pt, cx));
+					}
+				} else if (dx == 4){
+					Point cx = new Point(x+1, y+1);
+					boolean rx = this.currentLoop.contains(cx);
+					if (isInside(cx) && this.map[cx.x][cx.y] == 1 && rx != lx){
+						candidates.add(new Pair<>(pt, cx));
+					}
+				} else if (dx == 1){
+					Point cx = new Point(x-1, y+1);
+					boolean rx = this.currentLoop.contains(cx);
+					if (isInside(cx) && this.map[cx.x][cx.y] == 4 && rx != lx){
+						candidates.add(new Pair<>(pt, cx));
+					}
+				}
+			}
+		}
+
+		if (candidates.contains(new Pair<>(sp[0], sp[1]))){
+			candidates.remove(new Pair<>(sp[0], sp[1]));
+		}
+
+		if (candidates.size() > 0){
+			Random random = new Random();
+			Pair<Point, Point> pair = candidates.get(random.nextInt(candidates.size()));
+			return new Point[]{pair.a, pair.b};
+		} else {
+			return sp;
+		}
+	}
+
+	private void buildInitialMap(){
+		if (this.width % 2 == 0 || this.height % 2 == 0){
+			for (int x = 0; x < this.width; x++){
+				for (int y = 0; y < this.height; y++){
+					map[x][y] = getZigZag(x, y);
+				}
+			}
+
+			if (this.height % 2 == 0){
+				this.startPoint = new Point(0, this.height-1);
+			} else if (this.width % 2 == 0){
+				this.startPoint = new Point(this.width-1, 1);
+			}
+		} else {
+			throw new IllegalStateException("Hamiltonian cycle can't be generated");
+		}
+	}
+
+	private boolean isInside(Point p){
+		return p.x >= 0 && p.y >= 0 && p.x < this.width && p.y < this.height;
+	}
+
+	private int getZigZag(int x, int y){
+		if (this.height % 2 == 0){
+			if ((x == 1 && y % 2 == 0 && y > 0) || (x == this.width-1 && y % 2 == 1)){
+				return 8;
+			}
+			if (x == 0){
+				if (y == 0){
+					return 6;
+				} else if (y != this.height-1){
+					return 2;
+				}
+			}
+			return y % 2 == 0 ? 1 : 4;
+		} else if (this.width % 2 == 0){
+			if ((y == 1 && x % 2 == 1) || (y == this.height-1 && x % 2 == 0)){
+				return 4;
+			}
+			if (y == 0){
+				if (x == 0){
+					return 2;
+				} else {
+					return 1;
+				}
+			}
+			return x % 2 == 0 ? 2 : 8;
+		} else {
+			throw new IllegalStateException();
+		}
+	}
+
+	public void print(){
+		StringBuilder builder = new StringBuilder();
+		for (int y = 0; y < this.height; y++){
+			for (int x = 0; x < this.width; x++){
+				if ((this.map[x][y] & 8) == 8){
+					builder.append(" v");
+				} else if (y > 0 && (this.map[x][y-1] & 2) == 2){
+					builder.append(" ^");
+				} else {
+					builder.append("  ");
+				}
+			}
+			builder.append("\n");
+			for (int x = 0; x < this.width; x++){
+				String sym = this.startPoint.equals(new Point(x, y)) ? "S" : "O";
+				if ((this.map[x][y] & 1) == 1){
+					builder.append(">"+sym);
+				} else if (x > 0 && (this.map[x-1][y] & 4) == 4){
+					builder.append("<"+sym);
+				} else {
+					builder.append(" "+sym);
+				}
+			}
+			builder.append("\n");
+		}
+
+		System.out.println(builder.toString());
+	}
+
+	public void render(GraphicsContext gc, int size){
+		gc.save();
+		gc.setLineWidth(3);
+		for (int x = 0; x < this.width; x++){
+			for (int y = 0; y < this.height; y++){
+				int dx = this.map[x][y];
+				if ((dx & 8) == 8){
+					gc.setStroke(Color.WHITE);
+					gc.strokeLine((x+0.5)*size, (y+0.5)*size, (x+0.5)*size, y*size);
+				}
+				if ((dx & 4) == 4){
+					gc.setStroke(Color.RED);
+					gc.strokeLine((x+0.5)*size, (y+0.5)*size, (x+1)*size, (y+0.5)*size);
+				}
+				if ((dx & 2) == 2){
+					gc.setStroke(Color.GREEN);
+					gc.strokeLine((x+0.5)*size, (y+0.5)*size, (x+0.5)*size, (y+1)*size);
+				}
+				if ((dx & 1) == 1){
+					gc.setStroke(Color.BLUE);
+					gc.strokeLine((x+0.5)*size, (y+0.5)*size, x*size, (y+0.5)*size);
+				}
+			}
+		}
+		gc.restore();
+	}
 }

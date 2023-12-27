@@ -11,8 +11,12 @@ public class GameWorld{
 		this.w = w;
 		this.h = h;
 		this.map = new boolean[w][h];
-		this.cycle = new Cycle(this);
-		//this.cycle.print(this);
+		this.cycle = new Cycle(w, h);
+		this.cycle.generate(250);
+	}
+
+	public Cycle getCycle(){
+		return this.cycle;
 	}
 	
 	public int getWidth(){
@@ -25,6 +29,18 @@ public class GameWorld{
 	
 	public void clear(){
 		this.map = new boolean[this.w][this.h];
+	}
+
+	public boolean isBoardFull(){
+		for (int x = 0; x < this.w; x++){
+			for (int y = 0; y < this.h; y++){
+				if (!this.map[x][y]){
+					return false;
+				}
+			}
+		}
+
+		return true;
 	}
 	
 	public boolean isSolid(int i, int j){
