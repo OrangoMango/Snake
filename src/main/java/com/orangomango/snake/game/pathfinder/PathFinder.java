@@ -13,13 +13,13 @@ public class PathFinder{
 	private final Cell[][] map;
 	private Cell nextCell = null;
 
-	public PathFinder(GameWorld gw, int sx, int sy, int ex, int ey, SnakeBody head, SnakeBody tail){
+	public PathFinder(GameWorld gw, int sx, int sy, int ex, int ey, SnakeBody head, SnakeBody tail, boolean softBlocks){
 		this.map = new Cell[gw.getWidth()][gw.getHeight()];
 		this.startX = sx;
 		this.startY = sy;
 		this.endX = ex;
 		this.endY = ey;
-		loadMap(gw, head, tail);
+		loadMap(gw, head, tail, softBlocks);
 		this.map[this.startX][this.startY].setStart();
 		this.map[this.endX][this.endY].setEnd();
 		calculate();
@@ -48,27 +48,25 @@ public class PathFinder{
 			Cell s = getCellAt(cx, cy+1);
 			Cell w = getCellAt(cx-1, cy);
 
-			boolean danger = false;
-			int selected = -1;
-			Random random = new Random();
-			if ((n == null || n.solid) && (e == null || e.solid) && (s == null || s.solid) && (w == null || w.solid)){
-				danger = true;
-				selected = random.nextInt(4);
-			}
+			boolean danger = false; //(n == null || n.solid) && (e == null || e.solid) && (s == null || s.solid) && (w == null || w.solid);
+			/*if (danger){
+				System.out.println("> Danger detected");
+				//try {Thread.sleep(5000);} catch (Exception ex){}
+			}*/
 			
-			if (n != null && !n.visited && (!n.solid || (danger && n.soft && selected == 0))){
+			if (n != null && !n.visited && (!n.solid || (danger && n.soft))){
 				n.parent = cell;
 				cells.add(n);
 			}
-			if (e != null && !e.visited && (!e.solid || (danger && e.soft && selected == 1))){
+			if (e != null && !e.visited && (!e.solid || (danger && e.soft))){
 				e.parent = cell;
 				cells.add(e);
 			}
-			if (s != null && !s.visited && (!s.solid || (danger && s.soft && selected == 2))){
+			if (s != null && !s.visited && (!s.solid || (danger && s.soft))){
 				s.parent = cell;
 				cells.add(s);
 			}
-			if (w != null && !w.visited && (!w.solid || (danger && w.soft && selected == 3))){
+			if (w != null && !w.visited && (!w.solid || (danger && w.soft))){
 				w.parent = cell;
 				cells.add(w);
 			}
@@ -80,7 +78,6 @@ public class PathFinder{
 				cell.path = true;
 				if (cell.parent != null && cell.parent.parent == null){
 					this.nextCell = cell;
-					this.nextCell.marked = true;
 				}
 				cell = cell.parent;
 			}
@@ -104,14 +101,14 @@ public class PathFinder{
 		int head = gw.getCycle().getIndex(h.x, h.y);
 		int pos = gw.getCycle().getIndex(cell.getX(), cell.getY());
 		int food = gw.getCycle().getIndex(this.endX, this.endY);
-		return (pos < tail || pos > head) && (head > food || pos < food);
+		return (pos > head) && (head > food || pos < food); // pos < tail || 
 	}
 
-	private void loadMap(GameWorld gw, SnakeBody head, SnakeBody tail){
+	private void loadMap(GameWorld gw, SnakeBody head, SnakeBody tail, boolean softBlocks){
 		for (int i = 0; i < gw.getWidth(); i++){
 			for (int j = 0; j < gw.getHeight(); j++){
 				this.map[i][j] = new Cell(i, j, gw.isSolid(i, j));
-				if (!isAcceptable(gw, this.map[i][j], head, tail)){
+				if (softBlocks && Math.sqrt(Math.pow(i-this.startX, 2)+Math.pow(j-this.startY, 2)) == 1 && !isAcceptable(gw, this.map[i][j], head, tail)){
 					if (!this.map[i][j].solid) this.map[i][j].soft = true;
 					this.map[i][j].solid = true;
 				}

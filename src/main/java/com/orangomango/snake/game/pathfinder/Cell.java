@@ -8,7 +8,7 @@ import com.orangomango.snake.game.SnakeBody;
 public class Cell{
 	private int x, y;
 	public boolean start, end;
-	public boolean visited, solid, path, marked, soft;
+	public boolean visited, solid, path, soft;
 	public Cell parent;
 
 	public Cell(int x, int y, boolean solid){
@@ -56,8 +56,6 @@ public class Cell{
 		} else if (this.end){
 			color = Color.CYAN;
 		}
-
-		if (this.marked) color = Color.RED;
 
 		gc.setFill(color);
 		gc.fillRect(this.x*SnakeBody.SIZE, this.y*SnakeBody.SIZE, SnakeBody.SIZE, SnakeBody.SIZE);

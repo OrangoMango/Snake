@@ -16,6 +16,8 @@ public class GameWorld{
 			this.w--;
 		}
 
+		System.out.format("Size: %dx%d\n", this.w, this.h);
+
 		this.map = new boolean[this.w][this.h];
 		this.cycle = new Cycle(this.w, this.h);
 		this.cycle.generate(250);

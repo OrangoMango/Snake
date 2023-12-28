@@ -17,7 +17,7 @@ import java.util.*;
 import com.orangomango.snake.HomeScreen;
 import com.orangomango.snake.MainApplication;
 import com.orangomango.snake.game.pathfinder.*;
-import com.orangomango.snake.game.cycle.Cycle;
+import com.orangomango.snake.game.cycle.Point;
 
 public class GameScreen{
 	private static final int WIDTH = 720;
@@ -39,6 +39,7 @@ public class GameScreen{
 	private boolean ai, wrap;
 	private boolean threadRunning = true;
 	private Timeline loop;
+	private PathFinder renderingPathFinder;
 	
 	public GameScreen(Stage stage, int size, int timeInterval, boolean ai, boolean wrap){
 		Thread counter = new Thread(() -> {
@@ -91,6 +92,8 @@ public class GameScreen{
 		timer.start();
 		
 		Thread gameThread = new Thread(() -> {
+			boolean debug = false;
+
 			while (this.threadRunning){
 				try {
 					if (this.apple == null) continue;
@@ -99,31 +102,73 @@ public class GameScreen{
 
 					if (this.ai){
 						SnakeBody tail = snake.get(snake.size()-1);
-						Cycle cycle = this.gameWorld.getCycle();
-						Cell cell = cycle.getNextCell(head.x, head.y, this.snakeDirection);
-						final boolean scoreAcceptable = this.snake.size() < this.gameWorld.getWidth()*this.gameWorld.getHeight()*0.4;
+						Cell cell = this.gameWorld.getCycle().getNextCell(head.x, head.y, this.snakeDirection);
+						final boolean scoreAcceptable = this.snake.size() < this.gameWorld.getWidth()*this.gameWorld.getHeight()*0.3;
 
-						if (!scoreAcceptable){
+						if (!scoreAcceptable && !debug){
 							System.out.println("\n\nSCORE CAP REACHED\n\n");
 							Thread.sleep(5000);
+							debug = true;
 						}
 
 						// Pathfinding algorithm
-						PathFinder pf = new PathFinder(this.gameWorld, head.x, head.y, apple.x, apple.y, head, tail);
+						PathFinder pf = new PathFinder(this.gameWorld, head.x, head.y, apple.x, apple.y, head, tail, true);
+						this.renderingPathFinder = pf;
 						Cell foundCell = pf.getNextCell();
+						boolean specialPath = false;
+						final int maxCellCount = (int)((this.gameWorld.getWidth()*this.gameWorld.getHeight()-this.snake.size())*0.75); // At least 75%
+						int hamCount = 0;
 
 						if (foundCell != null && scoreAcceptable){
-							setDirection(foundCell, head);
-							System.out.format("A* says to %d %d\n", foundCell.getX(), foundCell.getY());
 							//Thread.sleep(1000);
+							final int emptyCells = countEmptyCells(new Point(foundCell.getX(), foundCell.getY()));
+							System.out.println("Cells: "+emptyCells+"/"+maxCellCount);
+							if (emptyCells < maxCellCount && emptyCells < this.snake.size()){
+								specialPath = true;
+								//Thread.sleep(1500);
+							} else {
+								setDirection(foundCell, head);
+								System.out.format("A* says to %d %d\n", foundCell.getX(), foundCell.getY());
+							}
 						} else if (cell != null){
-							setDirection(cell, head);
-							System.out.println("H");
+							if (this.snake.stream().filter(sb -> sb.x == cell.getX() && sb.y == cell.getY()).findAny().isPresent()){
+								System.out.println("\nTHIS IS A STUPID MOVE!\n");
+								specialPath = true;
+								//Thread.sleep(7000);
+							} else {
+								hamCount = countEmptyCells(new Point(cell.getX(), cell.getY()));
+								System.out.println("Cells: "+hamCount+"/"+maxCellCount);
+								if (hamCount < maxCellCount && hamCount < this.snake.size()){
+									specialPath = true;
+									//Thread.sleep(1500);
+								} else {
+									setDirection(cell, head);
+									System.out.println("H");
+								}
+							}
 							//Thread.sleep(2500);
 						}
 
-						if (foundCell == null && cell == null){
-							System.out.println("Both null");
+						if (foundCell == null && cell == null) specialPath = true;
+
+						if (specialPath){
+							System.out.println("Special path (both null or stupid move)");
+							PathFinder pf2 = new PathFinder(this.gameWorld, head.x, head.y, apple.x, apple.y, head, tail, false);
+							this.renderingPathFinder = pf2;
+							foundCell = pf2.getNextCell();
+							int cellCount = foundCell == null ? -1 : countEmptyCells(new Point(foundCell.getX(), foundCell.getY()));
+							if (foundCell != null && (cellCount > maxCellCount || cellCount >= this.snake.size())){
+								setDirection(foundCell, head);
+							} else if (cell != null && hamCount >= this.snake.size() || hamCount > maxCellCount && this.snake.stream().filter(sb -> sb.x == cell.getX() && sb.y == cell.getY()).findAny().isEmpty()){
+								setDirection(cell, head); // Hamiltonian path
+							} else {
+								// The snake must survive
+								Cell availableCell = findAvailableCell(head);
+								if (availableCell != null){
+									setDirection(availableCell, head);
+								}
+							}
+							//Thread.sleep(2000);
 						}
 
 						next = getNext(head);
@@ -149,16 +194,16 @@ public class GameScreen{
 						MainApplication.playSound("point");
 						generateApple(next);
 					} else if (!dead){
-						snake.remove(snake.size()-1);
+						this.snake.remove(this.snake.size()-1);
 					}
 					
 					if (dead){
 						MainApplication.playSound("gameover");
-						Thread.sleep(25000); // Temp (1000ms)
 						System.out.println("GAME OVER: "+this.score);
+						Thread.sleep(50000); // Temp (1000ms)
 						resetGame();
 					} else{
-						snake.add(0, next);
+						this.snake.add(0, next);
 						this.snakeDirection = this.direction;
 					}
 					
@@ -175,6 +220,81 @@ public class GameScreen{
 		Scene scene = new Scene(pane, WIDTH, HEIGHT);
 		scene.setFill(Color.BLACK);
 		return scene;
+	}
+
+	private Cell findAvailableCell(SnakeBody head){
+		Cell n = this.gameWorld.isInsideMap(head.x, head.y-1) ? new Cell(head.x, head.y-1, false) : null;
+		Cell e = this.gameWorld.isInsideMap(head.x+1, head.y) ? new Cell(head.x+1, head.y, false) : null;
+		Cell s = this.gameWorld.isInsideMap(head.x, head.y+1) ? new Cell(head.x, head.y+1, false) : null;
+		Cell w = this.gameWorld.isInsideMap(head.x-1, head.y) ? new Cell(head.x-1, head.y, false) : null;
+
+		System.out.println("No other solution...");
+		Cell bestCell = null;
+		int emptyCells = Integer.MIN_VALUE;
+		Cell[] cells = new Cell[]{n, e, s, w};
+		for (int i = 0; i < 4; i++){
+			Cell cell = cells[i];
+			if (cell != null && this.snake.stream().filter(sb -> sb.x == cell.getX() && sb.y == cell.getY()).findAny().isEmpty()){
+				int empty = countEmptyCells(new Point(cell.getX(), cell.getY()));
+				if (empty > emptyCells){
+					emptyCells = empty;
+					bestCell = cell;
+				}
+			}
+		}
+		//try { Thread.sleep(2000); } catch (InterruptedException ex){}
+
+		return bestCell;
+	}
+
+	private int countEmptyCells(Point start){
+		List<Point> visited = new ArrayList<>();
+		List<Point> tiles = new ArrayList<>();
+		tiles.add(start);
+
+		while (tiles.size() != 0){
+			Point tile = tiles.remove(0);
+			if (visited.contains(tile)) continue;
+			visited.add(tile);
+
+			Point n = this.gameWorld.isInsideMap(tile.x, tile.y-1) ? new Point(tile.x, tile.y-1) : null;
+			Point e = this.gameWorld.isInsideMap(tile.x+1, tile.y) ? new Point(tile.x+1, tile.y) : null;
+			Point s = this.gameWorld.isInsideMap(tile.x, tile.y+1) ? new Point(tile.x, tile.y+1) : null;
+			Point w = this.gameWorld.isInsideMap(tile.x-1, tile.y) ? new Point(tile.x-1, tile.y) : null;
+
+			if (n != null && !visited.contains(n) && this.snake.stream().filter(sb -> sb.x == n.x && sb.y == n.y).findAny().isEmpty()){
+				tiles.add(n);
+			}
+			if (e != null && !visited.contains(e) && this.snake.stream().filter(sb -> sb.x == e.x && sb.y == e.y).findAny().isEmpty()){
+				tiles.add(e);
+			}
+			if (s != null && !visited.contains(s) && this.snake.stream().filter(sb -> sb.x == s.x && sb.y == s.y).findAny().isEmpty()){
+				tiles.add(s);
+			}
+			if (w != null && !visited.contains(w) && this.snake.stream().filter(sb -> sb.x == w.x && sb.y == w.y).findAny().isEmpty()){
+				tiles.add(w);
+			}
+
+			/*try {
+				for (int y = 0; y < this.gameWorld.getHeight(); y++){
+					for (int x = 0; x < this.gameWorld.getWidth(); x++){
+						final Point p = new Point(x, y);
+						String str = visited.contains(p) ? "o" : ".";
+						if (this.snake.stream().filter(sb -> sb.x == p.x && sb.y == p.y).findAny().isPresent()){
+							str = "x";
+						}
+						System.out.print(str);
+					}
+					System.out.println();
+				}
+				System.out.println();
+				Thread.sleep(100);
+			} catch (InterruptedException ex){
+				ex.printStackTrace();
+			}*/
+		}
+
+		return visited.size();
 	}
 	
 	private SnakeBody getNext(SnakeBody head){
@@ -193,7 +313,7 @@ public class GameScreen{
 	}
 	
 	private void resetGame(){
-		this.gameWorld = new GameWorld(WIDTH/SnakeBody.SIZE, HEIGHT/SnakeBody.SIZE);
+		/*this.gameWorld = new GameWorld(WIDTH/SnakeBody.SIZE, HEIGHT/SnakeBody.SIZE);
 		snake.clear();
 		snake.add(new SnakeBody(6, 5));
 		snake.add(new SnakeBody(5, 5));
@@ -205,7 +325,8 @@ public class GameScreen{
 		}
 		this.score = 0;
 		MainApplication.playSound("gameStart");
-		generateApple(getNext(snake.get(0)));
+		generateApple(getNext(snake.get(0)));*/
+		System.exit(0);
 	}
 	
 	private List<Apple> getCells(int x, int y){
@@ -299,6 +420,15 @@ public class GameScreen{
 			this.showAStar = !this.showAStar;
 			keys.put(KeyCode.F3, false);
 		}
+
+		// DEBUG KEYS
+		if (keys.getOrDefault(KeyCode.O, false)){
+			this.timeInterval -= 5;
+			keys.put(KeyCode.O, false);
+		} else if (keys.getOrDefault(KeyCode.P, false)){
+			this.timeInterval += 5;
+			keys.put(KeyCode.P, false);
+		}
 		
 		for (int i = this.snake.size()-1; i >= 0; i--){
 			SnakeBody sb = this.snake.get(i);
@@ -308,15 +438,15 @@ public class GameScreen{
 		this.apple.render(gc);
 
 		if (this.showInfo) this.gameWorld.getCycle().render(gc, SnakeBody.SIZE);
-		if (this.showAStar){
-			SnakeBody head = this.snake.get(0);
-			SnakeBody tail = this.snake.get(this.snake.size()-1);
-			PathFinder pf = new PathFinder(this.gameWorld, head.x, head.y, apple.x, apple.y, head, tail);
-			pf.render(gc, false);
+		if (this.showAStar && this.renderingPathFinder != null){
+			this.renderingPathFinder.render(gc, false);
 		}
 		
 		gc.setFill(Color.BLACK);
-		if (this.showInfo) gc.fillText(String.format("FPS: %d, Snake direction: %s, Dir: %s", fps, this.snakeDirection, this.direction), 30, 55);
+		if (this.showInfo){
+			SnakeBody head = this.snake.get(0);
+			gc.fillText(String.format("FPS: %d, Snake direction: %s, Dir: %s, TimeInterval: %d", fps, this.snakeDirection, this.direction, this.timeInterval), 30, 55);
+		}
 		gc.save();
 		gc.setFont(new Font("Sans-serif", 20));
 		gc.fillText(String.format("Score: %d, Highscore: %d"+(this.ai ? " | AI" : ""), this.score, this.highscore), 30, 40);
