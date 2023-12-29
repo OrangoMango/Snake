@@ -30,6 +30,10 @@ public class Cycle{
 		buildInitialMap();
 	}
 
+	public Point getStartPoint(){
+		return this.startPoint;
+	}
+
 	public void generate(int n){
 		for (int i = 0; i < n; i++){
 			Point[] sp = split();
