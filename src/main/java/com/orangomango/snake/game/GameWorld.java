@@ -15,7 +15,7 @@ public class GameWorld{
 			this.w--;
 		}
 
-		System.out.format("%dx%d\n", this.w, this.h);
+		System.out.format("%dx%d=%d\n", this.w, this.h, this.w*this.h);
 		this.cycle = new Cycle(this.w, this.h);
 		this.cycle.generate(250);
 	}

@@ -38,6 +38,7 @@ public class GameScreen{
 	private boolean threadRunning = true;
 	private volatile boolean paused = false;
 	private Timeline loop;
+	private int steps;
 	
 	public GameScreen(Stage stage, int size, int timeInterval, boolean ai, boolean wrap){
 		Thread counter = new Thread(() -> {
@@ -92,17 +93,24 @@ public class GameScreen{
 		Thread gameThread = new Thread(() -> {
 			while (this.threadRunning){
 				try {
-					if (this.apple == null || this.paused) continue;
-					SnakeBody head = this.snake.get(0);
+					if (this.paused) continue;
+					SnakeBody head = null;
+					synchronized (this){
+						head = this.snake.get(0);
+					}
 
 					if (this.ai){
-						Point bestPoint = getBestPoint(head);
 						final Cycle cycle = this.gameWorld.getCycle();
 						final Point nextPoint = cycle.getNextPoint(head.x, head.y);
-						if ((bestPoint.equals(nextPoint) && this.snake.stream().filter(sb -> sb.x == bestPoint.x && sb.y == bestPoint.y).findAny().isEmpty()) || isSafe(bestPoint)){
-							setDirection(bestPoint, head);
+						if (this.apple == null){
+							setDirection(nextPoint, head); // The game has finished so just follow the tail
 						} else {
-							setDirection(nextPoint, head);
+							Point bestPoint = getBestPoint(head);
+							if ((bestPoint.equals(nextPoint) && this.snake.stream().filter(sb -> sb.x == bestPoint.x && sb.y == bestPoint.y).findAny().isEmpty()) || isSafe(bestPoint)){
+								setDirection(bestPoint, head);
+							} else {
+								setDirection(nextPoint, head);
+							}
 						}
 					}
 					
@@ -123,7 +131,7 @@ public class GameScreen{
 					}
 
 					synchronized (this){
-						if (next.x == this.apple.x && next.y == this.apple.y){
+						if (this.apple != null && next.x == this.apple.x && next.y == this.apple.y){
 							this.score++;
 							MainApplication.playSound("point");
 							generateApple(next);
@@ -133,7 +141,7 @@ public class GameScreen{
 						
 						if (dead){
 							MainApplication.playSound("gameover");
-							System.out.println("GAME OVER: "+this.score);
+							System.out.format("GAME OVER, SCORE: %d STEPS: %d\n", this.score, this.steps);
 							Thread.sleep(2500);
 							resetGame();
 						} else{
@@ -141,6 +149,7 @@ public class GameScreen{
 						}
 					}
 
+					if (this.apple != null) this.steps++;
 					Thread.sleep(this.timeInterval);
 				} catch (InterruptedException ex){
 					ex.printStackTrace();
@@ -220,21 +229,24 @@ public class GameScreen{
 	
 	private void resetGame(){
 		this.gameWorld = new GameWorld(WIDTH/SnakeBody.SIZE, HEIGHT/SnakeBody.SIZE);
-		snake.clear();
-		snake.add(new SnakeBody(6, 5));
-		snake.add(new SnakeBody(5, 5));
+		synchronized (this){
+			this.snake.clear();
+			this.snake.add(new SnakeBody(6, 5));
+			this.snake.add(new SnakeBody(5, 5));
+		}
 		this.direction = Side.RIGHT;
 		if (this.score > this.highscore){
 			this.highscore = this.score;
 			MainApplication.playSound("highscore");
 		}
 		this.score = 0;
+		this.steps = 0;
 		MainApplication.playSound("gameStart");
 		generateApple(getNext(snake.get(0)));
 	}
 	
 	private void generateApple(SnakeBody next){
-		Apple apple = new Apple(random.nextInt(WIDTH/(int)Apple.SIZE), random.nextInt(HEIGHT/(int)Apple.SIZE));
+		Apple apple = new Apple(random.nextInt(this.gameWorld.getWidth()), random.nextInt(this.gameWorld.getHeight()));
 		for (int i = 0; i < this.snake.size(); i++){
 			SnakeBody sb = this.snake.get(i);
 			if ((sb.x == apple.x && sb.y == apple.y) || (next.x == apple.x && next.y == apple.y)){
@@ -243,7 +255,15 @@ public class GameScreen{
 					return;
 				} else {
 					apple = null;
-					System.out.println("GAME OVER: "+this.score);
+					System.out.format("GAME OVER, SCORE: %d STEPS: %d\n", this.score, this.steps);
+					new Thread(() -> {
+						try {
+							Thread.sleep(6000);
+							resetGame();
+						} catch (InterruptedException ex){
+							ex.printStackTrace();
+						}
+					}).start();
 					break;
 				}
 			}
@@ -320,7 +340,7 @@ public class GameScreen{
 		gc.setFill(Color.BLACK);
 		if (this.showInfo){
 			this.gameWorld.getCycle().render(gc, SnakeBody.SIZE);
-			gc.fillText(String.format("FPS: %d, Direction: %s, TimeInterval: %d, Paused: %s", fps, this.direction, this.timeInterval, this.paused), 30, 55);
+			gc.fillText(String.format("FPS: %d, Direction: %s, TimeInterval: %d, Paused: %s, Steps: %d", fps, this.direction, this.timeInterval, this.paused, this.steps), 30, 55);
 		}
 		gc.save();
 		gc.setFont(new Font("Sans-serif", 20));

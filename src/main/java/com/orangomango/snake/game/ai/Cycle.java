@@ -49,13 +49,13 @@ public class Cycle{
 			indices.put(current, count++);
 
 			int dx = this.map[current.x][current.y];
-			if (dx == 8){
+			if ((dx & 8) == 8){
 				current = new Point(current.x+ARCS.get(8)[0], current.y+ARCS.get(8)[1]);
-			} else if (dx == 4){
+			} else if ((dx & 4) == 4){
 				current = new Point(current.x+ARCS.get(4)[0], current.y+ARCS.get(4)[1]);
-			} else if (dx == 2){
+			} else if ((dx & 2) == 2){
 				current = new Point(current.x+ARCS.get(2)[0], current.y+ARCS.get(2)[1]);
-			} else if (dx == 1){
+			} else if ((dx & 1) == 1){
 				current = new Point(current.x+ARCS.get(1)[0], current.y+ARCS.get(1)[1]);
 			}
 		} while (!current.equals(this.startPoint));
@@ -75,13 +75,13 @@ public class Cycle{
 
 	public Point getNextPoint(int x, int y){
 		int dx = this.map[x][y];
-		if (dx == 8){
+		if ((dx & 8) == 8){
 			return new Point(x+ARCS.get(8)[0], y+ARCS.get(8)[1]);
-		} else if (dx == 4){
+		} else if ((dx & 4) == 4){
 			return new Point(x+ARCS.get(4)[0], y+ARCS.get(4)[1]);
-		} else if (dx == 2){
+		} else if ((dx & 2) == 2){
 			return new Point(x+ARCS.get(2)[0], y+ARCS.get(2)[1]);
-		} else if (dx == 1){
+		} else if ((dx & 1) == 1){
 			return new Point(x+ARCS.get(1)[0], y+ARCS.get(1)[1]);
 		} else return null;
 	}
@@ -283,19 +283,19 @@ public class Cycle{
 		for (int x = 0; x < this.width; x++){
 			for (int y = 0; y < this.height; y++){
 				int dx = this.map[x][y];
-				if (dx == 8){
+				if ((dx & 8) == 8){
 					gc.setStroke(Color.WHITE);
 					gc.strokeLine((x+0.5)*size, (y+0.5)*size, (x+0.5)*size, y*size);
 				}
-				if (dx == 4){
+				if ((dx & 4) == 4){
 					gc.setStroke(Color.RED);
 					gc.strokeLine((x+0.5)*size, (y+0.5)*size, (x+1)*size, (y+0.5)*size);
 				}
-				if (dx == 2){
+				if ((dx & 2) == 2){
 					gc.setStroke(Color.GREEN);
 					gc.strokeLine((x+0.5)*size, (y+0.5)*size, (x+0.5)*size, (y+1)*size);
 				}
-				if (dx == 1){
+				if ((dx & 1) == 1){
 					gc.setStroke(Color.BLUE);
 					gc.strokeLine((x+0.5)*size, (y+0.5)*size, x*size, (y+0.5)*size);
 				}
