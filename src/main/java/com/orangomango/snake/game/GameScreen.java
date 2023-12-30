@@ -36,7 +36,7 @@ public class GameScreen{
 	private boolean showInfo = false;
 	private boolean ai, wrap;
 	private boolean threadRunning = true;
-	private volatile boolean paused = false;
+	private volatile boolean paused = false, allowMovement = true;
 	private Timeline loop;
 	private int steps;
 	
@@ -150,6 +150,7 @@ public class GameScreen{
 					}
 
 					if (this.apple != null) this.steps++;
+					this.allowMovement = true;
 					Thread.sleep(this.timeInterval);
 				} catch (InterruptedException ex){
 					ex.printStackTrace();
@@ -291,19 +292,28 @@ public class GameScreen{
 		gc.setFill(Color.web("#31FFB2"));
 		gc.fillRect(0, 0, WIDTH, HEIGHT);
 		
-		if (keys.getOrDefault(KeyCode.UP, false) && this.direction != Side.BOTTOM){
-			this.direction = Side.TOP;
-			keys.put(KeyCode.UP, false);
-		} else if (keys.getOrDefault(KeyCode.DOWN, false) && this.direction != Side.TOP){
-			this.direction = Side.BOTTOM;
-			keys.put(KeyCode.DOWN, false);
-		} else if (keys.getOrDefault(KeyCode.RIGHT, false) && this.direction != Side.LEFT){
-			this.direction = Side.RIGHT;
-			keys.put(KeyCode.RIGHT, false);
-		} else if (keys.getOrDefault(KeyCode.LEFT, false) && this.direction != Side.RIGHT){
-			this.direction = Side.LEFT;
-			keys.put(KeyCode.LEFT, false);
-		} else if (keys.getOrDefault(KeyCode.F1, false)){
+		if (this.allowMovement){
+			if (keys.getOrDefault(KeyCode.UP, false) && this.direction != Side.BOTTOM){
+				this.direction = Side.TOP;
+				this.allowMovement = false;
+				keys.put(KeyCode.UP, false);
+			} else if (keys.getOrDefault(KeyCode.DOWN, false) && this.direction != Side.TOP){
+				this.direction = Side.BOTTOM;
+				this.allowMovement = false;
+				keys.put(KeyCode.DOWN, false);
+			} else if (keys.getOrDefault(KeyCode.RIGHT, false) && this.direction != Side.LEFT){
+				this.direction = Side.RIGHT;
+				this.allowMovement = false;
+				keys.put(KeyCode.RIGHT, false);
+			} else if (keys.getOrDefault(KeyCode.LEFT, false) && this.direction != Side.RIGHT){
+				this.direction = Side.LEFT;
+				this.allowMovement = false;
+				keys.put(KeyCode.LEFT, false);
+			}
+		}
+
+		// DEBUG KEYS
+		if (keys.getOrDefault(KeyCode.F1, false)){
 			this.showInfo = !this.showInfo;
 			keys.put(KeyCode.F1, false);
 		} else if (keys.getOrDefault(KeyCode.F2, false)){
@@ -318,10 +328,7 @@ public class GameScreen{
 		} else if (keys.getOrDefault(KeyCode.SPACE, false)){
 			this.paused = !this.paused;
 			keys.put(KeyCode.SPACE, false);
-		}
-
-		// DEBUG KEYS
-		if (keys.getOrDefault(KeyCode.O, false)){
+		} else if (keys.getOrDefault(KeyCode.O, false)){
 			this.timeInterval = Math.max(this.timeInterval-5, 0);
 			keys.put(KeyCode.O, false);
 		} else if (keys.getOrDefault(KeyCode.P, false)){
