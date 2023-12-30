@@ -1,12 +1,9 @@
-package com.orangomango.snake.game.cycle;
+package com.orangomango.snake.game.ai;
 
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
-import javafx.geometry.Side;
 
 import java.util.*;
-
-import com.orangomango.snake.game.pathfinder.Cell;
 
 public class Cycle{
 	private int width, height;
@@ -28,10 +25,6 @@ public class Cycle{
 		this.height = h;
 		this.map = new int[w][h];
 		buildInitialMap();
-	}
-
-	public Point getStartPoint(){
-		return this.startPoint;
 	}
 
 	public void generate(int n){
@@ -56,13 +49,13 @@ public class Cycle{
 			indices.put(current, count++);
 
 			int dx = this.map[current.x][current.y];
-			if ((dx & 8) == 8){
+			if (dx == 8){
 				current = new Point(current.x+ARCS.get(8)[0], current.y+ARCS.get(8)[1]);
-			} else if ((dx & 4) == 4){
+			} else if (dx == 4){
 				current = new Point(current.x+ARCS.get(4)[0], current.y+ARCS.get(4)[1]);
-			} else if ((dx & 2) == 2){
+			} else if (dx == 2){
 				current = new Point(current.x+ARCS.get(2)[0], current.y+ARCS.get(2)[1]);
-			} else if ((dx & 1) == 1){
+			} else if (dx == 1){
 				current = new Point(current.x+ARCS.get(1)[0], current.y+ARCS.get(1)[1]);
 			}
 		} while (!current.equals(this.startPoint));
@@ -72,16 +65,24 @@ public class Cycle{
 		return this.indices.get(new Point(x, y));
 	}
 
-	public Cell getNextCell(int x, int y, Side direction){
+	public int getCost(int start, int end){
+		if (end >= start){
+			return end-start;
+		} else {
+			return (this.width*this.height-1)-start+end;
+		}
+	}
+
+	public Point getNextPoint(int x, int y){
 		int dx = this.map[x][y];
-		if ((dx & 8) == 8 && direction != Side.BOTTOM){
-			return new Cell(x+ARCS.get(8)[0], y+ARCS.get(8)[1], false);
-		} else if ((dx & 4) == 4 && direction != Side.LEFT){
-			return new Cell(x+ARCS.get(4)[0], y+ARCS.get(4)[1], false);
-		} else if ((dx & 2) == 2 && direction != Side.TOP){
-			return new Cell(x+ARCS.get(2)[0], y+ARCS.get(2)[1], false);
-		} else if ((dx & 1) == 1 && direction != Side.RIGHT){
-			return new Cell(x+ARCS.get(1)[0], y+ARCS.get(1)[1], false);
+		if (dx == 8){
+			return new Point(x+ARCS.get(8)[0], y+ARCS.get(8)[1]);
+		} else if (dx == 4){
+			return new Point(x+ARCS.get(4)[0], y+ARCS.get(4)[1]);
+		} else if (dx == 2){
+			return new Point(x+ARCS.get(2)[0], y+ARCS.get(2)[1]);
+		} else if (dx == 1){
+			return new Point(x+ARCS.get(1)[0], y+ARCS.get(1)[1]);
 		} else return null;
 	}
 
@@ -276,54 +277,25 @@ public class Cycle{
 		}
 	}
 
-	public void print(){
-		StringBuilder builder = new StringBuilder();
-		for (int y = 0; y < this.height; y++){
-			for (int x = 0; x < this.width; x++){
-				if ((this.map[x][y] & 8) == 8){
-					builder.append(" v");
-				} else if (y > 0 && (this.map[x][y-1] & 2) == 2){
-					builder.append(" ^");
-				} else {
-					builder.append("  ");
-				}
-			}
-			builder.append("\n");
-			for (int x = 0; x < this.width; x++){
-				String sym = this.startPoint.equals(new Point(x, y)) ? "S" : "O";
-				if ((this.map[x][y] & 1) == 1){
-					builder.append(">"+sym);
-				} else if (x > 0 && (this.map[x-1][y] & 4) == 4){
-					builder.append("<"+sym);
-				} else {
-					builder.append(" "+sym);
-				}
-			}
-			builder.append("\n");
-		}
-
-		System.out.println(builder.toString());
-	}
-
 	public void render(GraphicsContext gc, int size){
 		gc.save();
 		gc.setLineWidth(3);
 		for (int x = 0; x < this.width; x++){
 			for (int y = 0; y < this.height; y++){
 				int dx = this.map[x][y];
-				if ((dx & 8) == 8){
+				if (dx == 8){
 					gc.setStroke(Color.WHITE);
 					gc.strokeLine((x+0.5)*size, (y+0.5)*size, (x+0.5)*size, y*size);
 				}
-				if ((dx & 4) == 4){
+				if (dx == 4){
 					gc.setStroke(Color.RED);
 					gc.strokeLine((x+0.5)*size, (y+0.5)*size, (x+1)*size, (y+0.5)*size);
 				}
-				if ((dx & 2) == 2){
+				if (dx == 2){
 					gc.setStroke(Color.GREEN);
 					gc.strokeLine((x+0.5)*size, (y+0.5)*size, (x+0.5)*size, (y+1)*size);
 				}
-				if ((dx & 1) == 1){
+				if (dx == 1){
 					gc.setStroke(Color.BLUE);
 					gc.strokeLine((x+0.5)*size, (y+0.5)*size, x*size, (y+0.5)*size);
 				}

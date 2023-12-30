@@ -1,4 +1,4 @@
-package com.orangomango.snake.game.cycle;
+package com.orangomango.snake.game.ai;
 
 public class Pair<T, U>{
 	public T a;

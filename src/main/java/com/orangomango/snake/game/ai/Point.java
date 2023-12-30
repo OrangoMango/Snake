@@ -1,4 +1,4 @@
-package com.orangomango.snake.game.cycle;
+package com.orangomango.snake.game.ai;
 
 import java.util.Objects;
 
