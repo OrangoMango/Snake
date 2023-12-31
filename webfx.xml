@@ -5,7 +5,7 @@
 
     <groupId>com.orangomango</groupId>
     <artifactId>snake</artifactId>
-    <version>1.0</version>
+    <version>2.0</version>
 
     <modules>
         <subdirectories-modules/>

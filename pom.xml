@@ -9,13 +9,14 @@
         <groupId>dev.webfx</groupId>
         <artifactId>webfx-parent</artifactId>
         <version>0.1.0-SNAPSHOT</version>
+        <relativePath/>
     </parent>
 
     <groupId>com.orangomango</groupId>
 
     <artifactId>snake</artifactId>
 
-    <version>1.0</version>
+    <version>2.0</version>
 
     <repositories>
 
@@ -36,10 +37,10 @@
     <packaging>pom</packaging>
 
     <modules>
-        <module>websnake-application</module>
-        <module>websnake-application-gluon</module>
-        <module>websnake-application-gwt</module>
-        <module>websnake-application-openjfx</module>
+        <module>Snake-application</module>
+        <module>Snake-application-gluon</module>
+        <module>Snake-application-gwt</module>
+        <module>Snake-application-openjfx</module>
     </modules>
 
 </project>
