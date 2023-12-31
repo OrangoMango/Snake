@@ -347,7 +347,7 @@ public class GameScreen{
 		gc.setFill(Color.BLACK);
 		if (this.showInfo){
 			this.gameWorld.getCycle().render(gc, SnakeBody.SIZE);
-			gc.fillText(String.format("FPS: %d, Direction: %s, TimeInterval: %d, Paused: %s, Steps: %d", fps, this.direction, this.timeInterval, this.paused, this.steps), 30, 55);
+			gc.fillText(String.format("FPS: %d, Direction: %s, TimeInterval: %d, Paused: %s, Steps: %d", this.fps, this.direction, this.timeInterval, this.paused, this.steps), 30, 55);
 		}
 		gc.save();
 		gc.setFont(new Font("Sans-serif", 20));

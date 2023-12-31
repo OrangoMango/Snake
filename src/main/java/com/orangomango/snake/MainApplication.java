@@ -6,6 +6,11 @@ import javafx.scene.media.*;
 
 import java.util.*;
 
+/**
+ * Perfect snake AI made in Java/JavaFX
+ * @author OrangoMango [https://orangomango.github.io]
+ * @version 2.0
+ */
 public class MainApplication extends Application{
 	private static Map<String, Media> sounds = new HashMap<>();
 	
@@ -37,10 +42,5 @@ public class MainApplication extends Application{
 	
 	public static void main(String[] args){
 		launch(args);
-
-		/*com.orangomango.snake.game.cycle.Cycle cycle = new com.orangomango.snake.game.cycle.Cycle(11, 16);
-		cycle.generate(150);
-		cycle.print();
-		System.exit(0);*/
 	}
 }
