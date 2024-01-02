@@ -2,6 +2,7 @@ package com.orangomango.snake;
 
 import javafx.application.Application;
 import javafx.stage.Stage;
+import javafx.scene.image.Image;
 import javafx.scene.media.*;
 
 import java.util.*;
@@ -30,6 +31,7 @@ public class MainApplication extends Application{
 		
 		stage.setResizable(false);
 		stage.setScene(hs.getScene());
+		stage.getIcons().add(new Image(getClass().getResourceAsStream("/icon.png")));
 		stage.show();
 	}
 	
