@@ -1,7 +1,6 @@
 package com.orangomango.snake.game;
 
 import javafx.stage.Stage;
-import javafx.stage.Screen;
 import javafx.scene.Scene;
 import javafx.scene.layout.StackPane;
 import javafx.scene.canvas.*;
@@ -22,8 +21,8 @@ import com.orangomango.snake.MainApplication;
 import com.orangomango.snake.game.ai.*;
 
 public class GameScreen{
-	private static final int WIDTH = (int)Screen.getPrimary().getVisualBounds().getWidth();
-	private static final int HEIGHT = (int)Screen.getPrimary().getVisualBounds().getHeight();
+	private static final int WIDTH = 1400;
+	private static final int HEIGHT = 720;
 	private static final int FPS = 40;
 	
 	private Stage stage;
@@ -136,7 +135,7 @@ public class GameScreen{
 			if (this.apple != null) this.steps++;
 			this.allowMovement = true;
 		}
-		Scheduler.scheduleDelay(this.timeInterval, this::doGameLoop);
+		if (this.threadRunning) Scheduler.scheduleDelay(this.timeInterval, this::doGameLoop);
 	}
 
 	private boolean isSafe(Point point){
@@ -255,8 +254,11 @@ public class GameScreen{
 	private static String formatString(String text, Object... objects){
 		String[] parts = text.split("%s");
 		StringBuilder output = new StringBuilder();
-		for (int i = 0; i < parts.length-1; i++){
-			output.append(parts[i]).append(objects[i].toString());
+		for (int i = 0; i < parts.length; i++){
+			output.append(parts[i]);
+			if (i < objects.length){
+				output.append(objects[i].toString());
+			}
 		}
 
 		return output.toString();

@@ -1,7 +1,6 @@
 package com.orangomango.snake;
 
 import javafx.stage.Stage;
-import javafx.stage.Screen;
 import javafx.scene.Scene;
 import javafx.scene.layout.StackPane;
 import javafx.scene.canvas.*;
@@ -18,8 +17,8 @@ import dev.webfx.platform.resource.Resource;
 import com.orangomango.snake.game.GameScreen;
 
 public class HomeScreen{
-	public static final int WIDTH = (int)Screen.getPrimary().getVisualBounds().getWidth();
-	public static final int HEIGHT = (int)Screen.getPrimary().getVisualBounds().getHeight();
+	public static final int WIDTH = 1400;
+	public static final int HEIGHT = 720;
 	private static final int FPS = 40;
 	private static final Image PLAY_BUTTON = new Image(Resource.toUrl("/images/play_button.png", HomeScreen.class));
 	
