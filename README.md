@@ -10,6 +10,7 @@ Available for browser, windows, mac and linux (amd64 and arm64)
 * F1 to toggle FPS and Hamiltonian path visualization
 * F2 to toggle AI.
 * O/P to change the snake's speed
+* SPACE to pause/resume
 
 The first slider changes the cell size (Max: small playground) and the second one changes the tick time (in milliseconds, Max: slow game).
 
