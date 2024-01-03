@@ -126,6 +126,7 @@ public class GameScreen{
 				
 				if (dead){
 					MainApplication.playSound("gameover");
+					this.paused = true;
 					Scheduler.scheduleDelay(2500, this::resetGame);
 				} else{
 					this.snake.add(0, next);
@@ -216,6 +217,7 @@ public class GameScreen{
 		this.steps = 0;
 		MainApplication.playSound("gameStart");
 		generateApple(getNext(snake.get(0)));
+		this.paused = false;
 	}
 	
 	private void generateApple(SnakeBody next){

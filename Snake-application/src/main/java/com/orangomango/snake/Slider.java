@@ -8,16 +8,18 @@ public class Slider{
 	private double x, y;
 	private int min, max;
 	private double cursor = 0;
+	private String text;
 	
 	private static final double WIDTH = 0.45*HomeScreen.HEIGHT;
 	private static final double HEIGHT = 0.1*HomeScreen.HEIGHT;
 	
-	public Slider(double x, double y, int min, int max, int defaultValue){
+	public Slider(String text, double x, double y, int min, int max, int defaultValue){
+		this.text = text;
 		this.x = x;
 		this.y = y;
 		this.min = min;
 		this.max = max;
-		this.cursor = (double)defaultValue/(max-min);
+		this.cursor = (double)defaultValue/max;
 	}
 	
 	public double contains(double x, double y){
@@ -40,6 +42,7 @@ public class Slider{
 	public void render(GraphicsContext gc){
 		gc.setFill(Color.WHITE);
 		gc.fillRect(this.x, this.y+0.3*HEIGHT, WIDTH, HEIGHT*0.3);
+		gc.fillText(this.text, this.x+WIDTH+25, this.y+0.3*HEIGHT+25);
 		gc.fillOval(this.x+this.cursor*WIDTH-HEIGHT/2, this.y, HEIGHT, HEIGHT);
 		gc.fillText(Integer.toString(getValue()), this.x+this.cursor*WIDTH-HEIGHT/2, this.y+1.25*HEIGHT);
 	}

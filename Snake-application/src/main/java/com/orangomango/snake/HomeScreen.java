@@ -6,6 +6,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.canvas.*;
 import javafx.scene.paint.Color;
 import javafx.scene.image.Image;
+import javafx.scene.input.KeyCode;
 import javafx.animation.*;
 import javafx.util.Duration;
 import javafx.geometry.Rectangle2D;
@@ -40,10 +41,11 @@ public class HomeScreen{
 		gc.fillRect(0, 0, WIDTH, HEIGHT);
 		pane.getChildren().add(canvas);
 		
-		this.sliders.add(new Slider(0.85*HEIGHT, 0.2*HEIGHT, 5, 60, 25));
-		this.sliders.add(new Slider(0.85*HEIGHT, 0.38*HEIGHT, 45, 500, 150));
+		this.sliders.add(new Slider("Cell size", 0.85*HEIGHT, 0.2*HEIGHT, 35, 70, 50));
+		this.sliders.add(new Slider("Delay time\n(Low = fast snake)", 0.85*HEIGHT, 0.38*HEIGHT, 10, 500, 150));
 		
-		this.checkboxes.add(new Checkbox(0.65*HEIGHT, 0.6*HEIGHT, "AI (F2 to toggle)"));
+		this.checkboxes.add(new Checkbox(0.65*HEIGHT, 0.6*HEIGHT, "AI (H to toggle)"));
+		this.checkboxes.get(0).toggle();
 		this.checkboxes.add(new Checkbox(0.65*HEIGHT, 0.75*HEIGHT, "Wrapping"));
 		
 		Timeline loop = new Timeline(new KeyFrame(Duration.millis(1000.0/FPS), e -> update(gc)));
@@ -79,6 +81,15 @@ public class HomeScreen{
 				}
 			}
 		});
+
+		canvas.setFocusTraversable(true);
+		canvas.setOnKeyPressed(e -> {
+			if (e.getCode() == KeyCode.H){
+				this.checkboxes.get(0).toggle();
+				MainApplication.playSound("gui");
+			}
+		});
+
 		loop.setCycleCount(Animation.INDEFINITE);
 		loop.play();
 		
