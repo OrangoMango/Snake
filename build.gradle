@@ -20,7 +20,7 @@ tasks.withType(JavaCompile) {
 
 application {
     mainModule = 'com.orangomango.snake'
-    mainClass = 'com.orangomango.snake.MainApplication'
+    mainClass = 'com.orangomango.snake.Launcher'
 }
 
 javafx {
