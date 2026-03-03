@@ -9,8 +9,8 @@ import java.util.*;
 
 /**
  * Perfect snake AI made in Java/JavaFX
- * @author OrangoMango [https://orangomango.github.io]
- * @version 2.0
+ * @author OrangoMango [https://orangomango.org]
+ * @version 3.0
  */
 public class MainApplication extends Application{
 	private static Map<String, Media> sounds = new HashMap<>();
