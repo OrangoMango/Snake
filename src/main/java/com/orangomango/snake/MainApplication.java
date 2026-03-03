@@ -14,6 +14,7 @@ import java.util.*;
  */
 public class MainApplication extends Application{
 	private static Map<String, Media> sounds = new HashMap<>();
+	public static String APP_HOST, APP_UID;
 	
 	static{
 		sounds.put("gameStart", new Media(MainApplication.class.getResource("/gameStart.wav").toString()));
@@ -43,6 +44,8 @@ public class MainApplication extends Application{
 	}
 	
 	public static void main(String[] args){
+		APP_HOST = args.length >= 1 ? args[0] : null; 
+		APP_UID = args.length >= 2 ? args[1] : null;
 		launch(args);
 	}
 }

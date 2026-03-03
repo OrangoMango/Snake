@@ -15,3 +15,9 @@ gradle-app.setting
 
 # webfx
 target/
+
+*.env
+lib/*
+
+# Cached login file
+login.data

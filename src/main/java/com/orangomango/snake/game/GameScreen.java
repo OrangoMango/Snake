@@ -6,21 +6,30 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.canvas.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
-import javafx.animation.*;
+import javafx.scene.text.TextAlignment;
 import javafx.scene.input.KeyCode;
+import javafx.scene.effect.DropShadow;
+import javafx.animation.*;
 import javafx.util.Duration;
 import javafx.geometry.Side;
 import javafx.geometry.Point2D;
 
 import java.util.*;
+import org.json.JSONObject;
 
 import com.orangomango.snake.HomeScreen;
 import com.orangomango.snake.MainApplication;
 import com.orangomango.snake.game.ai.*;
+import com.orangomango.account.Account;
+import com.orangomango.account.Account;
+
+import static com.orangomango.snake.HomeScreen.WIDTH;
+import static com.orangomango.snake.HomeScreen.HEIGHT;
+import static com.orangomango.snake.ui.UiElement.FONT_SMALLSMALLSMALL;
+import static com.orangomango.snake.ui.UiElement.FONT_SMALL;
+import static com.orangomango.snake.ui.UiElement.FONT_LARGE;
 
 public class GameScreen{
-	private static final int WIDTH = 720;
-	private static final int HEIGHT = 480;
 	private int frames, fps;
 	private static final int FPS = 40;
 	
@@ -36,11 +45,13 @@ public class GameScreen{
 	private boolean showInfo = false;
 	private boolean ai, wrap;
 	private boolean threadRunning = true;
-	private volatile boolean paused = false, allowMovement = true;
+	private volatile boolean paused = false, allowMovement = true, gameFinished = false;
 	private Timeline loop;
 	private int steps;
+	private Account account;
+	private String gameMode;
 	
-	public GameScreen(Stage stage, int size, int timeInterval, boolean ai, boolean wrap){
+	public GameScreen(Stage stage, Account account, String gameMode, int size, int timeInterval, boolean ai, boolean wrap){
 		Thread counter = new Thread(() -> {
 			while (this.threadRunning){
 				try {
@@ -60,6 +71,14 @@ public class GameScreen{
 		this.ai = ai;
 		this.wrap = wrap;
 		SnakeBody.SIZE = Apple.SIZE = size;
+
+		this.account = account;
+		this.gameMode = gameMode;
+
+		if (this.account != null && this.gameMode != null){
+			JSONObject data = this.account.getAppData();
+			this.highscore = data.optInt("high_"+this.gameMode, 0);
+		}
 	}
 	
 	public Scene getScene(){
@@ -130,6 +149,21 @@ public class GameScreen{
 						dead = true;
 					}
 
+					if (dead){
+						this.gameFinished = true;
+						MainApplication.playSound("gameover");
+
+						System.out.format("GAME OVER, SCORE: %d STEPS: %d\n", this.score, this.steps);
+						Thread.sleep(2500);
+						if (this.account != null && this.gameMode != null && this.score > this.highscore){
+							boolean res = this.account.updateLeaderboard(this.gameMode, new int[]{this.score, -this.steps});
+							System.out.println(res);
+						}
+						resetGame();
+
+						continue;
+					}
+
 					synchronized (this){
 						if (this.apple != null && next.x == this.apple.x && next.y == this.apple.y){
 							this.score++;
@@ -139,14 +173,7 @@ public class GameScreen{
 							this.snake.remove(this.snake.size()-1);
 						}
 						
-						if (dead){
-							MainApplication.playSound("gameover");
-							System.out.format("GAME OVER, SCORE: %d STEPS: %d\n", this.score, this.steps);
-							Thread.sleep(2500);
-							resetGame();
-						} else{
-							this.snake.add(0, next);
-						}
+						this.snake.add(0, next);
 					}
 
 					if (this.apple != null) this.steps++;
@@ -239,9 +266,17 @@ public class GameScreen{
 		if (this.score > this.highscore){
 			this.highscore = this.score;
 			MainApplication.playSound("highscore");
+
+			// Save highscore
+			if (this.account != null && this.gameMode != null){
+				JSONObject data = this.account.getAppData();
+				data.put("high_"+this.gameMode, this.highscore);
+				this.account.setAppData(data);
+			}
 		}
 		this.score = 0;
 		this.steps = 0;
+		this.gameFinished = false;
 		MainApplication.playSound("gameStart");
 		generateApple(getNext(snake.get(0)));
 	}
@@ -289,8 +324,15 @@ public class GameScreen{
 	
 	private void update(GraphicsContext gc){
 		gc.clearRect(0, 0, WIDTH, HEIGHT);
-		gc.setFill(Color.web("#31FFB2"));
+		gc.setFill(Color.web("#020617"));
 		gc.fillRect(0, 0, WIDTH, HEIGHT);
+
+		gc.setFill(Color.web("#1e293b"));
+		gc.setLineWidth(1.2);
+		for (int i = 0; i < WIDTH; i++){
+			gc.strokeLine(i*SnakeBody.SIZE, 0, i*SnakeBody.SIZE, HEIGHT);
+			gc.strokeLine(0, i*SnakeBody.SIZE, WIDTH, i*SnakeBody.SIZE);
+		}
 		
 		if (this.allowMovement){
 			if (keys.getOrDefault(KeyCode.UP, false) && this.direction != Side.BOTTOM){
@@ -313,27 +355,31 @@ public class GameScreen{
 		}
 
 		// DEBUG KEYS
-		if (keys.getOrDefault(KeyCode.F1, false)){
-			this.showInfo = !this.showInfo;
-			keys.put(KeyCode.F1, false);
-		} else if (keys.getOrDefault(KeyCode.F2, false)){
-			this.ai = !this.ai;
-			keys.put(KeyCode.F2, false);
+		if (this.gameMode == null){
+			if (keys.getOrDefault(KeyCode.F1, false)){
+				this.showInfo = !this.showInfo;
+				keys.put(KeyCode.F1, false);
+			} else if (keys.getOrDefault(KeyCode.F2, false)){
+				this.ai = !this.ai;
+				keys.put(KeyCode.F2, false);
+			} else if (keys.getOrDefault(KeyCode.O, false)){
+				this.timeInterval = Math.max(this.timeInterval-5, 0);
+				keys.put(KeyCode.O, false);
+			} else if (keys.getOrDefault(KeyCode.P, false)){
+				this.timeInterval += 5;
+				keys.put(KeyCode.P, false);
+			}
+		}
+
+		if (keys.getOrDefault(KeyCode.SPACE, false)){
+			this.paused = !this.paused;
+			keys.put(KeyCode.SPACE, false);
 		} else if (keys.getOrDefault(KeyCode.ESCAPE, false)){
 			this.threadRunning = false;
 			this.loop.stop();
 			HomeScreen hs = new HomeScreen(this.stage);
 			this.stage.setScene(hs.getScene());
 			return;
-		} else if (keys.getOrDefault(KeyCode.SPACE, false)){
-			this.paused = !this.paused;
-			keys.put(KeyCode.SPACE, false);
-		} else if (keys.getOrDefault(KeyCode.O, false)){
-			this.timeInterval = Math.max(this.timeInterval-5, 0);
-			keys.put(KeyCode.O, false);
-		} else if (keys.getOrDefault(KeyCode.P, false)){
-			this.timeInterval += 5;
-			keys.put(KeyCode.P, false);
 		}
 		
 		synchronized (this){
@@ -344,14 +390,30 @@ public class GameScreen{
 		}
 
 		if (this.apple != null) this.apple.render(gc);
-		gc.setFill(Color.BLACK);
+		gc.setFill(Color.WHITE);
 		if (this.showInfo){
 			this.gameWorld.getCycle().render(gc, SnakeBody.SIZE);
 			gc.fillText(String.format("FPS: %d, Direction: %s, TimeInterval: %d, Paused: %s, Steps: %d", this.fps, this.direction, this.timeInterval, this.paused, this.steps), 30, 55);
 		}
 		gc.save();
-		gc.setFont(new Font("Sans-serif", 20));
-		gc.fillText(String.format("Score: %d, Highscore: %d"+(this.ai ? " | AI" : ""), this.score, this.highscore), 30, 40);
+		gc.setFont(FONT_SMALL);
+		gc.setEffect(new DropShadow(10, Color.WHITE));
+		gc.fillText(String.format("Score: %d, Highscore: %d"+(this.ai ? " | AI" : "")+"%s", this.score, this.highscore, this.gameMode == null ? "" : " | "+this.gameMode), 30, 40);
+		gc.setFont(FONT_SMALLSMALLSMALL);
+		gc.fillText("O - Faster | P - Slower | F1 - Debug | F2 - AutoPlay | SPACE - Pause", 30, HEIGHT-30);
 		gc.restore();
+
+		if (this.paused || this.gameFinished){
+			gc.save();
+			gc.setFill(Color.BLACK);
+			gc.setGlobalAlpha(0.6);
+			gc.fillRect(0, 0, WIDTH, HEIGHT);
+			gc.setGlobalAlpha(1.0);
+			gc.setFill(Color.WHITE);
+			gc.setFont(FONT_LARGE);
+			gc.setTextAlign(TextAlignment.CENTER);
+			gc.fillText(this.paused ? "GAME PAUSED" : "GAMEOVER", WIDTH/2.0, HEIGHT/2.0);
+			gc.restore();
+		}
 	}
 }
