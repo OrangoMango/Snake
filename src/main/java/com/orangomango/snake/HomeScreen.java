@@ -80,7 +80,7 @@ public class HomeScreen{
 			if (this.account == null){
 				Account account = new Account(this.usernameField.getText(), this.passwordField.getText());
 				JSONObject data = account.login();
-				if (data.getBoolean("success")){
+				if (data != null && data.getBoolean("success")){
 					String uid = data.getJSONObject("data").getString("uid");
 					System.out.println("Logged in as "+uid);
 					login(account);
@@ -268,8 +268,10 @@ public class HomeScreen{
 		}
 
 		// Render leaderboard
-		ArrayList<Pair<String, int[]>> data = this.leaderboards.get(this.currentLeadMode);
-		renderLeaderboard(gc, data);
+		if (this.leaderboards.size() > 0){
+			ArrayList<Pair<String, int[]>> data = this.leaderboards.get(this.currentLeadMode);
+			renderLeaderboard(gc, data);
+		}
 
 		// Render game name and version
 		gc.save();
@@ -393,6 +395,7 @@ public class HomeScreen{
 		objects.add(temp.getLeaderboard("extreme"));
 
 		for (JSONObject ob : objects){
+			if (ob == null) continue;
 			ArrayList<Pair<String, int[]>> scores = new ArrayList<>();
 			for (Object o : ob.getJSONArray("data")){
 				JSONObject pl = (JSONObject)o;
