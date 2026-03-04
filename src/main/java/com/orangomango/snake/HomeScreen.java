@@ -64,9 +64,9 @@ public class HomeScreen{
 
 		// Sliders
 		Slider cellSlider = new Slider(0.73, 0.25, 0.20, 0.10, "Cell Size", "px");
-		cellSlider.setInterval(5, 60, 30);
+		cellSlider.setInterval(25, 60, 30);
 		Slider speedSlider = new Slider(0.73, 0.40, 0.20, 0.10, "Speed", "ms");
-		speedSlider.setInterval(45, 500, 150);
+		speedSlider.setInterval(15, 300, 150);
 
 		// Toggle buttons
 		ToggleButton aiMode = new ToggleButton(0.73, 0.55, 0.20, 0.08, "Auto-Play");
@@ -120,7 +120,7 @@ public class HomeScreen{
 		MultistateButton difficultyButton = new MultistateButton(Color.web("#001d27"), 0.065, 0.55, 0.21, 0.18);
 		difficultyButton.addState("EASY", COLOR_EASY, () -> {
 			cellSlider.setValue(60);
-			speedSlider.setValue(300);
+			speedSlider.setValue(250);
 			aiMode.setSelected(false);
 			wrapping.setSelected(false);
 			this.gameMode = "easy";
@@ -133,7 +133,7 @@ public class HomeScreen{
 			this.gameMode = "medium";
 		});
 		difficultyButton.addState("HARD", COLOR_HARD, () -> {
-			cellSlider.setValue(20);
+			cellSlider.setValue(40);
 			speedSlider.setValue(80);
 			aiMode.setSelected(false);
 			wrapping.setSelected(false);
@@ -141,7 +141,7 @@ public class HomeScreen{
 		});
 		difficultyButton.addState("EXTREME", COLOR_EXTREME, () -> {
 			cellSlider.setValue(50);
-			speedSlider.setValue(60);
+			speedSlider.setValue(50);
 			aiMode.setSelected(false);
 			wrapping.setSelected(false);
 			this.gameMode = "extreme";

@@ -21,7 +21,6 @@ import com.orangomango.snake.HomeScreen;
 import com.orangomango.snake.MainApplication;
 import com.orangomango.snake.game.ai.*;
 import com.orangomango.account.Account;
-import com.orangomango.account.Account;
 
 import static com.orangomango.snake.HomeScreen.WIDTH;
 import static com.orangomango.snake.HomeScreen.HEIGHT;
