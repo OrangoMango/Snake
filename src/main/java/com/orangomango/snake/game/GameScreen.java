@@ -384,7 +384,13 @@ public class GameScreen{
 		synchronized (this){
 			for (int i = this.snake.size()-1; i >= 0; i--){
 				SnakeBody sb = this.snake.get(i);
-				sb.render(gc, i == 0, i == this.snake.size()-1 ? null : this.snake.get(i+1), i == 0 ? null : this.snake.get(i-1));
+				sb.render(gc, true, i == 0, i == this.snake.size()-1 ? null : this.snake.get(i+1), i == 0 ? null : this.snake.get(i-1));
+			}
+
+			// Draw a second time to avoid internal dropshadow effects
+			for (int i = this.snake.size()-1; i >= 0; i--){
+				SnakeBody sb = this.snake.get(i);
+				sb.render(gc, false, i == 0, i == this.snake.size()-1 ? null : this.snake.get(i+1), i == 0 ? null : this.snake.get(i-1));
 			}
 		}
 

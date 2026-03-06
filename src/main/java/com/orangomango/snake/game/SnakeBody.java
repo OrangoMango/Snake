@@ -16,7 +16,7 @@ public class SnakeBody {
         this.y = y;
     }
 
-    public void render(GraphicsContext gc, boolean head, SnakeBody next, SnakeBody prev){
+    public void render(GraphicsContext gc, boolean effect, boolean head, SnakeBody next, SnakeBody prev){
         int rotation = 0;
         int imgIndex = 0;
 
@@ -65,7 +65,7 @@ public class SnakeBody {
         gc.translate(renderX + SIZE / 2.0, renderY + SIZE / 2.0);
         gc.rotate(rotation);
         
-        gc.setEffect(new DropShadow(10, Color.web("#10b981")));
+        if (effect) gc.setEffect(new DropShadow(10, Color.web("#10b981")));
         
         gc.drawImage(IMAGE, 1+imgIndex*34, 1, 32, 32, -SIZE / 2.0, -SIZE / 2.0, SIZE, SIZE);
         gc.restore();
