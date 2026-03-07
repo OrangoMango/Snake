@@ -28,6 +28,6 @@ A fast, neon-style Snake game with online high scores and an automatic game solv
 <img width="300" alt="Screenshot 4" src="https://github.com/user-attachments/assets/6648af93-9964-450b-a4a3-3762b48c64d8" />
 
 ## Tools
-Built with Java and JavaFX. Uses a Hamiltonian Cycle algorithm for the perfect game solver. To run the game, execute the command `./gradlew :run [--args="<id host> <app-id>"]`
+Built with Java and JavaFX. Uses a Hamiltonian Cycle algorithm for the perfect game solver. To run the game, execute the command `./gradlew :run [--args="<host> <app-id>"]`
 
 Developed by [orangomango.org](https://www.orangomango.org)
