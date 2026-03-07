@@ -21,10 +21,11 @@ A fast, neon-style Snake game with online high scores and an automatic game solv
 * **F1**: Debug Mode
 * **F2**: Toggle Auto-Play
 
-<img width="256" alt="Screenshot 1" src="https://github.com/user-attachments/assets/061df7be-b58d-4e76-a86c-c9e07adb3c87" />
-<img width="256" alt="Screenshot 2" src="https://github.com/user-attachments/assets/5a7c6162-7841-443d-85a0-9118b6128a0d" />
-<img width="256" alt="Screenshot 3" src="https://github.com/user-attachments/assets/0ba37ba1-21c2-4341-b16f-c05faf6f24a4" />
-<img width="256" alt="Screenshot 4" src="https://github.com/user-attachments/assets/6648af93-9964-450b-a4a3-3762b48c64d8" />
+<img width="300" alt="Screenshot 1" src="https://github.com/user-attachments/assets/061df7be-b58d-4e76-a86c-c9e07adb3c87" />
+<img width="300" alt="Screenshot 2" src="https://github.com/user-attachments/assets/5a7c6162-7841-443d-85a0-9118b6128a0d" />
+<br/>
+<img width="300" alt="Screenshot 3" src="https://github.com/user-attachments/assets/0ba37ba1-21c2-4341-b16f-c05faf6f24a4" />
+<img width="300" alt="Screenshot 4" src="https://github.com/user-attachments/assets/6648af93-9964-450b-a4a3-3762b48c64d8" />
 
 ## Tools
 Built with Java and JavaFX. Uses a Hamiltonian Cycle algorithm for the perfect game solver. To run the game, execute the command `./gradlew :run [--args="<id host> <app-id>"]`
