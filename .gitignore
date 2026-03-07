@@ -17,7 +17,6 @@ gradle-app.setting
 target/
 
 *.env
-lib/*
 
 # Cached login file
 login.data
