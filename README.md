@@ -12,7 +12,7 @@ A fast, neon-style Snake game with online high scores and an automatic game solv
 * **Neon Graphics**: Enjoy a glowing snake, pulsing apples, and a clean new design.
 * **Custom Games**: Pick your own snake speed and board size for a casual match.
 * **Auto-Play**: Watch the snake use Hamiltonian Cycles to beat the game perfectly.
-* **Wrapping**: Let the snake pass through walls and appear on the other side.
+* **Wrapping**: Let the snake pass through screen edges and appear on the other side.
 
 ## Controls
 * **Arrows**: Move
