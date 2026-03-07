@@ -1,17 +1,32 @@
-# Perfect snake AI
-Snake game (Bot included) using the Hamiltonian cycle and some pathfinding algorithms.
+# Snake v3.0
 
-## Download
-itch.io page: https://orangomango.itch.io/snake  
-Available for browser, windows, mac and linux (amd64 and arm64)
+A fast, neon-style Snake game with online high scores and an automatic game solver.
 
-## Keys
-* Use Arrows to move the snake.
-* F1 to toggle FPS and Hamiltonian path visualization
-* F2 to toggle AI.
-* O/P to change the snake's speed
-* SPACE to pause/resume
+## Play Now
+* **Itch.io**: [orangomango.itch.io/snake](orangomango.itch.io/snake) (Browser, Windows, Linux and Mac)
+* **Live Leaderboard**: [https://id.orangomango.org/leaderboard/game.php?appid=1](https://id.orangomango.org/leaderboard/game.php?appid=1)
 
-The first slider changes the cell size (Max: small playground) and the second one changes the tick time (in milliseconds, Max: slow game).
+## Features
+* **Leaderboards**: Log in with your **MangoGames ID** to save your scores and compete against other players.
+* **4 Difficulty Levels**: Choose from **Easy**, **Medium**, **Hard**, or **Extreme**.
+* **Neon Graphics**: Enjoy a glowing snake, pulsing apples, and a clean new design.
+* **Custom Games**: Pick your own snake speed and board size for a casual match.
+* **Auto-Play**: Watch the snake use Hamiltonian Cycles to beat the game perfectly.
+* **Wrapping**: Let the snake pass through walls and appear on the other side.
 
-![Screenshot from 2024-01-02 19-49-46](https://github.com/OrangoMango/Snake/assets/61402409/8f11193e-24df-40bd-9b93-1f87c44eae70)
+## Controls
+* **Arrows**: Move
+* **Space**: Pause
+* **O / P**: Change speed
+* **F1**: Debug Mode
+* **F2**: Toggle Auto-Play
+
+<img width="256" alt="Screenshot 1" src="https://github.com/user-attachments/assets/061df7be-b58d-4e76-a86c-c9e07adb3c87" />
+<img width="256" alt="Screenshot 2" src="https://github.com/user-attachments/assets/5a7c6162-7841-443d-85a0-9118b6128a0d" />
+<img width="256" alt="Screenshot 3" src="https://github.com/user-attachments/assets/0ba37ba1-21c2-4341-b16f-c05faf6f24a4" />
+<img width="256" alt="Screenshot 4" src="https://github.com/user-attachments/assets/6648af93-9964-450b-a4a3-3762b48c64d8" />
+
+## Tools
+Built with Java and JavaFX. Uses a Hamiltonian Cycle algorithm for the perfect game solver. To run the game, execute the command `./gradlew :run [--args="<id host> <app-id>"]`
+
+Developed by [orangomango.org](https://www.orangomango.org)
