@@ -28,10 +28,10 @@ public class HomeScreen{
 	public static final int WIDTH = 900; // Ratio: 1.5
 	public static final int HEIGHT = 600;
 	private static final int FPS = 40;
-	private static final Color COLOR_EASY = Color.web("#10b981");
-	private static final Color COLOR_MEDIUM = Color.web("#3b82f6");
-	private static final Color COLOR_HARD = Color.web("#ef4444");
-	private static final Color COLOR_EXTREME = Color.web("#a855f7");
+	public static final Color COLOR_EASY = Color.web("#10b981");
+	public static final Color COLOR_MEDIUM = Color.web("#3b82f6");
+	public static final Color COLOR_HARD = Color.web("#ef4444");
+	public static final Color COLOR_EXTREME = Color.web("#a855f7");
 	
 	private Stage stage;
 	private ArrayList<UiElement> uielements = new ArrayList<>();

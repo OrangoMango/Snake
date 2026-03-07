@@ -27,6 +27,10 @@ import static com.orangomango.snake.HomeScreen.HEIGHT;
 import static com.orangomango.snake.ui.UiElement.FONT_SMALLSMALLSMALL;
 import static com.orangomango.snake.ui.UiElement.FONT_SMALL;
 import static com.orangomango.snake.ui.UiElement.FONT_LARGE;
+import static com.orangomango.snake.HomeScreen.COLOR_EASY;
+import static com.orangomango.snake.HomeScreen.COLOR_MEDIUM;
+import static com.orangomango.snake.HomeScreen.COLOR_HARD;
+import static com.orangomango.snake.HomeScreen.COLOR_EXTREME;
 
 public class GameScreen{
 	private int frames, fps;
@@ -403,9 +407,35 @@ public class GameScreen{
 		gc.save();
 		gc.setFont(FONT_SMALL);
 		gc.setEffect(new DropShadow(10, Color.WHITE));
-		gc.fillText(String.format("Score: %d, Highscore: %d"+(this.ai ? " | AI" : "")+"%s", this.score, this.highscore, this.gameMode == null ? "" : " | "+this.gameMode), 30, 40);
+		gc.fillText(String.format("Score: %d, Highscore: %d"+(this.ai ? " | AI" : ""), this.score, this.highscore), 30, 40);
 		gc.setFont(FONT_SMALLSMALLSMALL);
 		gc.fillText("O - Faster | P - Slower | F1 - Debug | F2 - AutoPlay | SPACE - Pause", 30, HEIGHT-30);
+
+		if (this.gameMode != null){
+			switch (this.gameMode){
+				case "easy":
+					gc.setFill(COLOR_EASY);
+					gc.setEffect(new DropShadow(25, Color.web("#34d399")));
+					break;
+				case "medium":
+					gc.setFill(COLOR_MEDIUM);
+					gc.setEffect(new DropShadow(25, Color.web("#60a5fa")));
+					break;
+				case "hard":
+					gc.setFill(COLOR_HARD);
+					gc.setEffect(new DropShadow(25, Color.web("#f87171")));
+					break;
+				case "extreme":
+					gc.setFill(COLOR_EXTREME);
+					gc.setEffect(new DropShadow(25, Color.web("#c084fc")));
+					break;
+			}
+
+			gc.setTextAlign(TextAlignment.RIGHT);
+			gc.setFont(FONT_SMALL);
+			gc.fillText(this.gameMode, WIDTH-30, 40);
+		}
+
 		gc.restore();
 
 		if (this.paused || this.gameFinished){
