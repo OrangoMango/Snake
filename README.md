@@ -25,7 +25,8 @@ A fast, neon-style Snake game with online high scores and an automatic game solv
 <img width="300" alt="Screenshot 2" src="https://github.com/user-attachments/assets/5a7c6162-7841-443d-85a0-9118b6128a0d" />
 <br/>
 <img width="300" alt="Screenshot 3" src="https://github.com/user-attachments/assets/0ba37ba1-21c2-4341-b16f-c05faf6f24a4" />
-<img width="300" alt="Screenshot 4" src="https://github.com/user-attachments/assets/6648af93-9964-450b-a4a3-3762b48c64d8" />
+<img width="300" alt="Screenshot 4" src="https://github.com/user-attachments/assets/9652075f-41f8-46e6-a151-e3dbbc5af357" />
+
 
 ## Tools
 Built with Java and JavaFX. Uses a Hamiltonian Cycle algorithm for the perfect game solver. To run the game, execute the command `./gradlew :run [--args="<host> <app-id>"]`
