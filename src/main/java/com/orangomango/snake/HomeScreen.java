@@ -283,7 +283,7 @@ public class HomeScreen{
 		gc.restore();
 	}
 
-	private void renderLeaderboard(GraphicsContext gc, ArrayList<Pair<String, int[]>> data) {
+	private void renderLeaderboard(GraphicsContext gc, ArrayList<Pair<String, int[]>> data){
 		final double bx = this.leaderboardRect.getMinX();
 		final double by = this.leaderboardRect.getMinY();
 		final double bw = this.leaderboardRect.getWidth();

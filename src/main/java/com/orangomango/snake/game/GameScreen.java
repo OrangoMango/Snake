@@ -332,8 +332,11 @@ public class GameScreen{
 
 		gc.setFill(Color.web("#1e293b"));
 		gc.setLineWidth(1.2);
-		for (int i = 0; i < WIDTH; i++){
+		for (int i = 0; i <= this.gameWorld.getWidth(); i++){
 			gc.strokeLine(i*SnakeBody.SIZE, 0, i*SnakeBody.SIZE, HEIGHT);
+		}
+		
+		for (int i = 0; i <= this.gameWorld.getHeight(); i++){
 			gc.strokeLine(0, i*SnakeBody.SIZE, WIDTH, i*SnakeBody.SIZE);
 		}
 		

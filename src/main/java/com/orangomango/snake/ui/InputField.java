@@ -80,7 +80,6 @@ public class InputField extends UiElement implements MouseSensible{
 		    final double cursorX = rw(this.x+0.05*this.w) + textWidth + 2;
 		    gc.strokeLine(cursorX, rh(this.y+0.25*this.h), cursorX, rh(this.y+0.75*this.h));
 		}
-
 	}
 
 	private static double getTextWidth(String text, Font font) {
