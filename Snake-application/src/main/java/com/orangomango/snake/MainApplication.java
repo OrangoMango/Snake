@@ -16,6 +16,8 @@ import dev.webfx.platform.resource.Resource;
  */
 public class MainApplication extends Application{
 	private static Map<String, AudioClip> sounds = new HashMap<>();
+	//public static String APP_HOST = "http://localhost:8000", APP_UID = "69a554c2a31b6";
+	public static String APP_HOST = "https://id.orangomango.org", APP_UID = "69a69e5f51ee6"; // I know, but the game is open source, so anyway.. :)
 	
 	static{
 		sounds.put("gameStart", new AudioClip(Resource.toUrl("/audio/gameStart.wav", MainApplication.class)));
@@ -39,9 +41,5 @@ public class MainApplication extends Application{
 	
 	public static void playSound(String sound){
 		sounds.get(sound).play();
-	}
-	
-	public static void main(String[] args){
-		launch(args);
 	}
 }

@@ -6,23 +6,37 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.canvas.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
-import javafx.animation.*;
+import javafx.scene.text.TextAlignment;
 import javafx.scene.input.KeyCode;
+import javafx.scene.effect.DropShadow;
+import javafx.animation.*;
 import javafx.util.Duration;
 import javafx.geometry.Side;
 import javafx.geometry.Point2D;
 
 import java.util.*;
 
+import dev.webfx.platform.ast.AST;
+import dev.webfx.platform.ast.ReadOnlyAstObject;
+import dev.webfx.platform.ast.AstObject;
 import dev.webfx.platform.scheduler.Scheduler;
 
 import com.orangomango.snake.HomeScreen;
 import com.orangomango.snake.MainApplication;
 import com.orangomango.snake.game.ai.*;
+import com.orangomango.account.Account;
+
+import static com.orangomango.snake.HomeScreen.WIDTH;
+import static com.orangomango.snake.HomeScreen.HEIGHT;
+import static com.orangomango.snake.ui.UiElement.FONT_SMALLSMALLSMALL;
+import static com.orangomango.snake.ui.UiElement.FONT_SMALL;
+import static com.orangomango.snake.ui.UiElement.FONT_LARGE;
+import static com.orangomango.snake.HomeScreen.COLOR_EASY;
+import static com.orangomango.snake.HomeScreen.COLOR_MEDIUM;
+import static com.orangomango.snake.HomeScreen.COLOR_HARD;
+import static com.orangomango.snake.HomeScreen.COLOR_EXTREME;
 
 public class GameScreen{
-	private static final int WIDTH = 1400;
-	private static final int HEIGHT = 720;
 	private static final int FPS = 40;
 	
 	private Stage stage;
@@ -37,16 +51,21 @@ public class GameScreen{
 	private boolean showInfo = false;
 	private boolean ai, wrap;
 	private boolean threadRunning = true;
-	private volatile boolean paused = false, allowMovement = true;
+	private volatile boolean paused = false, allowMovement = true, gameFinished = false;
 	private Timeline loop;
 	private int steps;
+	private Account account;
+	private String gameMode;
 	
-	public GameScreen(Stage stage, int size, int timeInterval, boolean ai, boolean wrap){
+	public GameScreen(Stage stage, Account account, String gameMode, int size, int timeInterval, boolean ai, boolean wrap){
 		this.stage = stage;
 		this.timeInterval = timeInterval;
 		this.ai = ai;
 		this.wrap = wrap;
 		SnakeBody.SIZE = Apple.SIZE = size;
+
+		this.account = account;
+		this.gameMode = gameMode;
 	}
 	
 	public Scene getScene(){
@@ -59,12 +78,18 @@ public class GameScreen{
 		gc.setFill(Color.BLACK);
 		gc.fillRect(0, 0, WIDTH, HEIGHT);
 		pane.getChildren().add(canvas);
+
+		if (this.account != null && this.gameMode != null) {
+			this.account.getAppData().onSuccess(data -> {
+				this.highscore = data == null ? 0 : data.getInteger("high_" + this.gameMode, 0);
+			});
+		}
 		
 		this.loop = new Timeline(new KeyFrame(Duration.millis(1000.0/FPS), e -> update(gc)));
 		this.loop.setCycleCount(Animation.INDEFINITE);
 		this.loop.play();
 		
-		this.gameWorld = new GameWorld(WIDTH/SnakeBody.SIZE, HEIGHT/SnakeBody.SIZE);
+		this.gameWorld = new GameWorld(WIDTH/SnakeBody.SIZE, HEIGHT/SnakeBody.SIZE, this.gameMode == null);
 		snake.add(new SnakeBody(6, 5));
 		snake.add(new SnakeBody(5, 5));
 		generateApple(getNext(snake.get(0)));
@@ -127,6 +152,12 @@ public class GameScreen{
 				if (dead){
 					MainApplication.playSound("gameover");
 					this.paused = true;
+					this.gameFinished = true;
+
+					if (this.account != null && this.gameMode != null && this.score > this.highscore){
+						this.account.updateLeaderboard(this.gameMode, new int[]{this.score, -this.steps});
+					}
+
 					Scheduler.scheduleDelay(2500, this::resetGame);
 				} else{
 					this.snake.add(0, next);
@@ -202,7 +233,10 @@ public class GameScreen{
 	}
 	
 	private void resetGame(){
-		this.gameWorld = new GameWorld(WIDTH/SnakeBody.SIZE, HEIGHT/SnakeBody.SIZE);
+		GameWorld temp = new GameWorld(this.gameWorld.getWidth(), this.gameWorld.getHeight(), false);
+		temp.setCycle(this.gameWorld.getCycle());
+		this.gameWorld = temp;
+		
 		synchronized (this){
 			this.snake.clear();
 			this.snake.add(new SnakeBody(6, 5));
@@ -212,9 +246,18 @@ public class GameScreen{
 		if (this.score > this.highscore){
 			this.highscore = this.score;
 			MainApplication.playSound("highscore");
+
+			if (this.account != null && this.gameMode != null){
+				this.account.getAppData().onSuccess(readData -> {
+					AstObject data = readData == null ? AST.createObject() : AST.createObject(readData);
+					data.set("high_" + this.gameMode, this.highscore);
+					this.account.setAppData(data);
+				});
+			}
 		}
 		this.score = 0;
 		this.steps = 0;
+		this.gameFinished = false;
 		MainApplication.playSound("gameStart");
 		generateApple(getNext(snake.get(0)));
 		this.paused = false;
@@ -267,9 +310,16 @@ public class GameScreen{
 	}
 	
 	private void update(GraphicsContext gc){
-		gc.clearRect(0, 0, WIDTH, HEIGHT);
-		gc.setFill(Color.web("#31FFB2"));
-		gc.fillRect(0, 0, WIDTH, HEIGHT);
+		gc.clearRect(0, 0, gc.getCanvas().getWidth(), gc.getCanvas().getHeight());
+		gc.setFill(Color.web("#020617"));
+		gc.fillRect(0, 0, gc.getCanvas().getWidth(), gc.getCanvas().getHeight());
+
+		gc.setFill(Color.web("#1e293b"));
+		gc.setLineWidth(1.2);
+		for (int i = 0; i < gc.getCanvas().getWidth(); i++){
+			gc.strokeLine(i*SnakeBody.SIZE, 0, i*SnakeBody.SIZE, gc.getCanvas().getHeight());
+			gc.strokeLine(0, i*SnakeBody.SIZE, gc.getCanvas().getWidth(), i*SnakeBody.SIZE);
+		}
 		
 		if (this.allowMovement){
 			if (keys.getOrDefault(KeyCode.UP, false) && this.direction != Side.BOTTOM){
@@ -292,13 +342,23 @@ public class GameScreen{
 		}
 
 		// DEBUG KEYS
-		if (keys.getOrDefault(KeyCode.I, false)){
-			this.showInfo = !this.showInfo;
-			keys.put(KeyCode.I, false);
-		} else if (keys.getOrDefault(KeyCode.H, false)){
-			this.ai = !this.ai;
-			keys.put(KeyCode.H, false);
-		} else if (keys.getOrDefault(KeyCode.ESCAPE, false)){
+		if (this.gameMode == null){
+			if (keys.getOrDefault(KeyCode.I, false)){
+				this.showInfo = !this.showInfo;
+				keys.put(KeyCode.I, false);
+			} else if (keys.getOrDefault(KeyCode.H, false)){
+				this.ai = !this.ai;
+				keys.put(KeyCode.H, false);
+			} else if (keys.getOrDefault(KeyCode.O, false)){
+				this.timeInterval = Math.max(this.timeInterval-5, 5);
+				keys.put(KeyCode.O, false);
+			} else if (keys.getOrDefault(KeyCode.P, false)){
+				this.timeInterval += 5;
+				keys.put(KeyCode.P, false);
+			}
+		}
+
+		if (keys.getOrDefault(KeyCode.ESCAPE, false)){
 			this.threadRunning = false;
 			this.loop.stop();
 			HomeScreen hs = new HomeScreen(this.stage);
@@ -307,30 +367,72 @@ public class GameScreen{
 		} else if (keys.getOrDefault(KeyCode.SPACE, false)){
 			this.paused = !this.paused;
 			keys.put(KeyCode.SPACE, false);
-		} else if (keys.getOrDefault(KeyCode.O, false)){
-			this.timeInterval = Math.max(this.timeInterval-5, 5);
-			keys.put(KeyCode.O, false);
-		} else if (keys.getOrDefault(KeyCode.P, false)){
-			this.timeInterval += 5;
-			keys.put(KeyCode.P, false);
 		}
 		
 		synchronized (this){
 			for (int i = this.snake.size()-1; i >= 0; i--){
 				SnakeBody sb = this.snake.get(i);
-				sb.render(gc, i == 0, i == this.snake.size()-1 ? null : this.snake.get(i+1), i == 0 ? null : this.snake.get(i-1));
+				sb.render(gc, true, i == 0, i == this.snake.size()-1 ? null : this.snake.get(i+1), i == 0 ? null : this.snake.get(i-1));
+			}
+
+			// Draw a second time to avoid internal dropshadow effects
+			for (int i = this.snake.size()-1; i >= 0; i--){
+				SnakeBody sb = this.snake.get(i);
+				sb.render(gc, false, i == 0, i == this.snake.size()-1 ? null : this.snake.get(i+1), i == 0 ? null : this.snake.get(i-1));
 			}
 		}
 
 		if (this.apple != null) this.apple.render(gc);
-		gc.setFill(Color.BLACK);
+		gc.setFill(Color.WHITE);
 		if (this.showInfo){
 			this.gameWorld.getCycle().render(gc, SnakeBody.SIZE);
 			gc.fillText(formatString("Direction: %s, TimeInterval: %s, Paused: %s, Steps: %s", this.direction, this.timeInterval, this.paused, this.steps), 30, 55);
 		}
 		gc.save();
-		gc.setFont(new Font("Sans-serif", 20));
+		gc.setFont(FONT_SMALL);
+		gc.setEffect(new DropShadow(10, Color.WHITE));
 		gc.fillText(formatString("Score: %s, Highscore: %s"+(this.ai ? " | AI" : ""), this.score, this.highscore), 30, 40);
+		gc.setFont(FONT_SMALLSMALLSMALL);
+		gc.fillText("O - Faster | P - Slower | I - Debug | H - AutoPlay | SPACE - Pause", 30, gc.getCanvas().getHeight()-30);
+
+		if (this.gameMode != null){
+			switch (this.gameMode){
+				case "easy":
+					gc.setFill(COLOR_EASY);
+					gc.setEffect(new DropShadow(25, Color.web("#34d399")));
+					break;
+				case "medium":
+					gc.setFill(COLOR_MEDIUM);
+					gc.setEffect(new DropShadow(25, Color.web("#60a5fa")));
+					break;
+				case "hard":
+					gc.setFill(COLOR_HARD);
+					gc.setEffect(new DropShadow(25, Color.web("#f87171")));
+					break;
+				case "extreme":
+					gc.setFill(COLOR_EXTREME);
+					gc.setEffect(new DropShadow(25, Color.web("#c084fc")));
+					break;
+			}
+
+			gc.setTextAlign(TextAlignment.RIGHT);
+			gc.setFont(FONT_SMALL);
+			gc.fillText(this.gameMode, gc.getCanvas().getWidth()-30, 40);
+		}
+
 		gc.restore();
+
+		if (this.paused || this.gameFinished){
+			gc.save();
+			gc.setFill(Color.BLACK);
+			gc.setGlobalAlpha(0.6);
+			gc.fillRect(0, 0, gc.getCanvas().getWidth(), gc.getCanvas().getHeight());
+			gc.setGlobalAlpha(1.0);
+			gc.setFill(Color.WHITE);
+			gc.setFont(FONT_LARGE);
+			gc.setTextAlign(TextAlignment.CENTER);
+			gc.fillText(this.gameFinished ? "GAMEOVER" : "GAME PAUSED", gc.getCanvas().getWidth()/2.0, gc.getCanvas().getHeight()/2.0);
+			gc.restore();
+		}
 	}
 }

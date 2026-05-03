@@ -5,10 +5,13 @@
         <source-packages/>
         <resource-package>images</resource-package>
         <resource-package>audio</resource-package>
+        <resource-package>fonts</resource-package>
     </exported-packages>
 
     <dependencies>
         <used-by-source-modules/>
+
+        <plugin-module>webfx-platform-ast-json-plugin</plugin-module>
     </dependencies>
 
     <providers>

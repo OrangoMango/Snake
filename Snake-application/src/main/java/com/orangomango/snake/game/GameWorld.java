@@ -6,7 +6,7 @@ public class GameWorld{
 	private int w, h;
 	private Cycle cycle;
 	
-	public GameWorld(int w, int h){
+	public GameWorld(int w, int h, boolean cycle){
 		this.w = w;
 		this.h = h;
 
@@ -15,12 +15,18 @@ public class GameWorld{
 			this.w--;
 		}
 
-		this.cycle = new Cycle(this.w, this.h);
-		this.cycle.generate(250);
+		if (cycle){
+			this.cycle = new Cycle(this.w, this.h);
+			this.cycle.generate(250);
+		}
 	}
 
 	public Cycle getCycle(){
 		return this.cycle;
+	}
+
+	public void setCycle(Cycle c){
+		this.cycle = c; // Do not generate the cycle again after restart
 	}
 	
 	public int getWidth(){

@@ -5,110 +5,442 @@ import javafx.scene.Scene;
 import javafx.scene.layout.StackPane;
 import javafx.scene.canvas.*;
 import javafx.scene.paint.Color;
+import javafx.scene.text.TextAlignment;
 import javafx.scene.image.Image;
-import javafx.scene.input.KeyCode;
 import javafx.animation.*;
 import javafx.util.Duration;
+import javafx.util.Pair;
 import javafx.geometry.Rectangle2D;
+import javafx.scene.effect.DropShadow;
 
 import java.util.*;
+import java.io.*;
 
-import dev.webfx.platform.resource.Resource;
+import dev.webfx.platform.ast.*;
+import dev.webfx.platform.storage.LocalStorage;
+import dev.webfx.platform.console.Console;
+import dev.webfx.platform.scheduler.Scheduler;
 
 import com.orangomango.snake.game.GameScreen;
+import com.orangomango.snake.ui.*;
+import com.orangomango.account.Account;
+
+import static com.orangomango.snake.MainApplication.APP_HOST;
+import static com.orangomango.snake.MainApplication.APP_UID;
 
 public class HomeScreen{
-	public static final int WIDTH = 1400;
+	public static final int WIDTH = 1080; // Ratio: 1.5
 	public static final int HEIGHT = 720;
 	private static final int FPS = 40;
-	private static final Image PLAY_BUTTON = new Image(Resource.toUrl("/images/play_button.png", HomeScreen.class));
+	public static final Color COLOR_EASY = Color.web("#10b981");
+	public static final Color COLOR_MEDIUM = Color.web("#3b82f6");
+	public static final Color COLOR_HARD = Color.web("#ef4444");
+	public static final Color COLOR_EXTREME = Color.web("#a855f7");
 	
 	private Stage stage;
-	private Rectangle2D playButton;
-	private List<Slider> sliders = new ArrayList<>();
-	private List<Checkbox> checkboxes = new ArrayList<>();
+	private ArrayList<UiElement> uielements = new ArrayList<>();
+	private Rectangle2D headerRect = new Rectangle2D(0.05, 0.04, 0.90, 0.08);
+	private Rectangle2D leaderboardRect = new Rectangle2D(0.31, 0.15, 0.38, 0.62);
+	private Button leadEasy, leadMedium, leadHard, leadExtreme;
+	private Button loginButton;
+	private Account account = null;
+	private String gameMode = null;
+	private ArrayList<ArrayList<Pair<String, int[]>>> leaderboards = new ArrayList<>();
+	private int currentLeadMode;
+	private InputField usernameField, passwordField;
+	private volatile boolean loading = false;
 	
 	public HomeScreen(Stage stage){
 		this.stage = stage;
-		this.playButton = new Rectangle2D(0.22*HEIGHT, 0.3*HEIGHT, 0.45*HEIGHT, 0.15*HEIGHT);
 	}
 	
 	public Scene getScene(){
+		Account.HOST = APP_HOST;
+		Account.registerApplication(APP_UID);
+
 		StackPane pane = new StackPane();
 		Canvas canvas = new Canvas(WIDTH, HEIGHT);
+
 		GraphicsContext gc = canvas.getGraphicsContext2D();
 		gc.setFill(Color.BLACK);
 		gc.fillRect(0, 0, WIDTH, HEIGHT);
 		pane.getChildren().add(canvas);
 		
-		this.sliders.add(new Slider("Cell size", 0.85*HEIGHT, 0.2*HEIGHT, 35, 70, 50));
-		this.sliders.add(new Slider("Delay time\n(Low = fast snake)", 0.85*HEIGHT, 0.38*HEIGHT, 10, 500, 150));
-		
-		this.checkboxes.add(new Checkbox(0.65*HEIGHT, 0.6*HEIGHT, "AI (H to toggle)"));
-		this.checkboxes.get(0).toggle();
-		this.checkboxes.add(new Checkbox(0.65*HEIGHT, 0.75*HEIGHT, "Wrapping"));
-		
 		Timeline loop = new Timeline(new KeyFrame(Duration.millis(1000.0/FPS), e -> update(gc)));
-		canvas.setOnMousePressed(e -> {
-			if (this.playButton.contains(e.getX(), e.getY())){
-				loop.stop();
-				boolean ai = false;
-				GameScreen gs = new GameScreen(this.stage, this.sliders.get(0).getValue(), this.sliders.get(1).getValue(), this.checkboxes.get(0).isSelected(), this.checkboxes.get(1).isSelected());
-				this.stage.setScene(gs.getScene());
-				MainApplication.playSound("gui");
-			} else {
-				for (Checkbox box : this.checkboxes){
-					if (box.contains(e.getX(), e.getY())){
-						box.toggle();
-						MainApplication.playSound("gui");
+
+		// Sliders
+		Slider cellSlider = new Slider(0.73, 0.25, 0.20, 0.10, "Cell Size", "px");
+		cellSlider.setInterval(25, 60, 30);
+		Slider speedSlider = new Slider(0.73, 0.40, 0.20, 0.10, "Speed", "ms");
+		speedSlider.setInterval(15, 300, 150);
+
+		// Toggle buttons
+		ToggleButton aiMode = new ToggleButton(0.73, 0.55, 0.20, 0.08, "Auto-Play");
+		ToggleButton wrapping = new ToggleButton(0.73, 0.65, 0.20, 0.08, "Wrapping");
+
+		// Login
+		this.usernameField = new InputField(0.062, 0.231, 0.216, 0.05, "Username");
+		this.passwordField = new InputField(0.062, 0.293, 0.216, 0.05, "Password");
+		passwordField.setPasswordField(true);
+		this.loginButton = new Button(Color.web("#10b981"), Color.web("#059669"), 0.062, 0.362, 0.216, 0.05, "LOGIN", UiElement.FONT_SMALLSMALL, Color.web("#ffffff"), () -> {
+			if (this.account == null){
+				Account tempAccount = new Account(this.usernameField.getText(), this.passwordField.getText());
+				tempAccount.login().onSuccess(data -> {
+					if (data != null && data.getBoolean("success")){
+						String uid = data.getObject("data").getString("uid");
+						Console.log("Logged in as " + uid);
+						login(tempAccount);
+					} else {
+						this.loginButton.bounce();
 					}
-				}
-			}
-		});
-		canvas.setOnMouseDragged(e -> {
-			for (Slider slider : this.sliders){
-				double cursor = slider.contains(e.getX(), e.getY());
-				if (cursor >= 0){
-					slider.updateCursor(cursor);
-				}
-			}
-		});
-		canvas.setOnMouseReleased(e -> {
-			for (Slider slider : this.sliders){
-				double cursor = slider.contains(e.getX(), e.getY());
-				if (cursor >= 0){
-					MainApplication.playSound("gui");
-				}
+				}).onFailure(e -> this.loginButton.bounce());
+			} else {
+				logout();
 			}
 		});
 
-		canvas.setFocusTraversable(true);
-		canvas.setOnKeyPressed(e -> {
-			if (e.getCode() == KeyCode.H){
-				this.checkboxes.get(0).toggle();
-				MainApplication.playSound("gui");
-			}
+		// Load login data
+		String uid = LocalStorage.getItem("user_uid");
+		if (uid != null && !uid.isEmpty()){
+		    Account cachedAccount = new Account(uid);
+			cachedAccount.initUsername(() -> {
+			    if (cachedAccount.getUsername() == null){
+			        Console.log("Cached authentication failed");
+			    } else {
+			        login(cachedAccount);
+			    }
+			});
+		}
+
+		Button playButton = new Button(Color.web("#10b981"), Color.web("#059669"), 0.25, 0.82, 0.50, 0.12, "PLAY", UiElement.FONT_MEDIUM, Color.web("#ffffff"), () -> {
+			this.loading = true;
+			Scheduler.scheduleDelay(500, () -> {
+				GameScreen gs = new GameScreen(this.stage, this.account, this.gameMode, (int)cellSlider.getValue(), (int)speedSlider.getValue(), aiMode.getSelected(), wrapping.getSelected());
+				this.stage.setScene(gs.getScene());
+				loop.stop();
+			});
 		});
+
+		MultistateButton difficultyButton = new MultistateButton(Color.web("#001d27"), 0.065, 0.55, 0.21, 0.18);
+		difficultyButton.addState("EASY", COLOR_EASY, () -> {
+			cellSlider.setValue(60);
+			speedSlider.setValue(250);
+			aiMode.setSelected(false);
+			wrapping.setSelected(false);
+			this.gameMode = "easy";
+		});
+		difficultyButton.addState("MEDIUM", COLOR_MEDIUM, () -> {
+			cellSlider.setValue(30);
+			speedSlider.setValue(150);
+			aiMode.setSelected(false);
+			wrapping.setSelected(false);
+			this.gameMode = "medium";
+		});
+		difficultyButton.addState("HARD", COLOR_HARD, () -> {
+			cellSlider.setValue(40);
+			speedSlider.setValue(80);
+			aiMode.setSelected(false);
+			wrapping.setSelected(false);
+			this.gameMode = "hard";
+		});
+		difficultyButton.addState("EXTREME", COLOR_EXTREME, () -> {
+			cellSlider.setValue(50);
+			speedSlider.setValue(50);
+			aiMode.setSelected(false);
+			wrapping.setSelected(false);
+			this.gameMode = "extreme";
+		});
+
+		difficultyButton.setState(1);
+		this.gameMode = "medium";
+
+		// Runnables for setting different game mode
+		Runnable rankedGame = () -> {
+			playButton.setStyle(Color.web("#10b981"), null, "PLAY RANKED", null);
+			difficultyButton.setDisabled(false);
+		};
+
+		Runnable casualGame = () -> {
+			playButton.setStyle(Color.web("#3B82F6"), null, "PLAY CASUAL", null);
+			difficultyButton.setDisabled(true);
+			this.gameMode = null;
+		};
+
+		difficultyButton.setOnStateChanged(rankedGame);
+		cellSlider.setOnStateChanged(casualGame);
+		speedSlider.setOnStateChanged(casualGame);
+		aiMode.setOnStateChanged(casualGame);
+		wrapping.setOnStateChanged(casualGame);
+
+		// Leaderboard
+		this.leadEasy = new Button(Color.web("#001d27"), COLOR_EASY, this.leaderboardRect.getMinX()+0.05*this.leaderboardRect.getWidth(), this.leaderboardRect.getMinY()+0.12*this.leaderboardRect.getHeight(), 0.2175*this.leaderboardRect.getWidth(), 0.08*this.leaderboardRect.getHeight(), "EASY", UiElement.FONT_SMALLSMALL, COLOR_EASY, () -> selectLeadMode(0));
+		this.leadMedium = new Button(Color.web("#001d27"), COLOR_MEDIUM, this.leaderboardRect.getMinX()+0.28*this.leaderboardRect.getWidth(), this.leaderboardRect.getMinY()+0.12*this.leaderboardRect.getHeight(), 0.2175*this.leaderboardRect.getWidth(), 0.08*this.leaderboardRect.getHeight(), "MED", UiElement.FONT_SMALLSMALL, COLOR_MEDIUM, () -> selectLeadMode(1));
+		this.leadHard = new Button(Color.web("#001d27"), COLOR_HARD, this.leaderboardRect.getMinX()+0.51*this.leaderboardRect.getWidth(), this.leaderboardRect.getMinY()+0.12*this.leaderboardRect.getHeight(), 0.2175*this.leaderboardRect.getWidth(), 0.08*this.leaderboardRect.getHeight(), "HARD", UiElement.FONT_SMALLSMALL, COLOR_HARD, () -> selectLeadMode(2));
+		this.leadExtreme = new Button(Color.web("#001d27"), COLOR_EXTREME, this.leaderboardRect.getMinX()+0.74*this.leaderboardRect.getWidth(), this.leaderboardRect.getMinY()+0.12*this.leaderboardRect.getHeight(), 0.2175*this.leaderboardRect.getWidth(), 0.08*this.leaderboardRect.getHeight(), "EXT", UiElement.FONT_SMALLSMALL, COLOR_EXTREME, () -> selectLeadMode(3));
+
+		this.leadEasy.setBorderSize(0.002);
+		this.leadMedium.setBorderSize(0.002);
+		this.leadHard.setBorderSize(0.002);
+		this.leadExtreme.setBorderSize(0.002);
+
+		selectLeadMode(1);
+		fetchLeaderboards();
+
+		this.uielements.add(new Container(Color.web("#0f172a"), Color.web("#1e293b"), 0.05, 0.15, 0.24, 0.28, Color.web("#94f7d4"), UiElement.FONT_SMALL, "MangoGames ID")); // Authentication
+		this.uielements.add(new Container(Color.web("#0f172a"), Color.web("#1e293b"), 0.05, 0.45, 0.24, 0.32, Color.web("#94f7d4"), UiElement.FONT_SMALL, "Game mode")); // Game mode selection
+		this.uielements.add(new Container(Color.web("#0f172a"), Color.web("#1e293b"), this.leaderboardRect.getMinX(), this.leaderboardRect.getMinY(), this.leaderboardRect.getWidth(), this.leaderboardRect.getHeight(), Color.web("#94f7d4"), UiElement.FONT_SMALL, "Leaderboard")); // Leaderboard
+		this.uielements.add(new Container(Color.web("#0f172a"), Color.web("#1e293b"), 0.71, 0.15, 0.24, 0.62, Color.web("#94f7d4"), UiElement.FONT_SMALL, "Custom game")); // Custom settings
+		this.uielements.add(new Container(Color.web("#0f172a"), Color.web("#10b981"), this.headerRect.getMinX(), this.headerRect.getMinY(), this.headerRect.getWidth(), this.headerRect.getHeight(), null, null, null)); // Game logo
+		
+		this.uielements.add(playButton);
+		this.uielements.add(cellSlider);
+		this.uielements.add(speedSlider);
+		this.uielements.add(aiMode);
+		this.uielements.add(wrapping);
+		this.uielements.add(this.usernameField);
+		this.uielements.add(this.passwordField);
+		this.uielements.add(loginButton);
+		this.uielements.add(difficultyButton);
+		this.uielements.add(this.leadEasy);
+		this.uielements.add(this.leadMedium);
+		this.uielements.add(this.leadHard);
+		this.uielements.add(this.leadExtreme);
+
+		canvas.setOnMouseMoved(e -> this.uielements.stream().filter(el -> el instanceof MouseSensible).forEach(el -> ((MouseSensible)el).onHover(e.getX(), e.getY())));
+		canvas.setOnMousePressed(e -> this.uielements.stream().filter(el -> el instanceof MouseSensible).forEach(el -> ((MouseSensible)el).onClick(e.getX(), e.getY())));
+		canvas.setOnMouseReleased(e -> this.uielements.stream().filter(el -> el instanceof MouseSensible).forEach(el -> ((MouseSensible)el).onRelease(e.getX(), e.getY())));
+		canvas.setOnMouseDragged(e -> this.uielements.stream().filter(el -> el instanceof MouseSensible).forEach(el -> ((MouseSensible)el).onDrag(e.getX(), e.getY())));
+
+		canvas.setFocusTraversable(true);
+		canvas.setOnKeyPressed(e -> this.uielements.stream().filter(el -> el instanceof InputField).forEach(el -> ((InputField)el).keyType(e)));
+
+		Scene scene = new Scene(pane, WIDTH, HEIGHT);
+		scene.setFill(Color.BLACK);
 
 		loop.setCycleCount(Animation.INDEFINITE);
 		loop.play();
 		
-		return new Scene(pane, WIDTH, HEIGHT);
+		return scene;
+	}
+
+	private void login(Account account){
+		this.account = account;
+		fetchLeaderboards();
+
+		this.usernameField.setText("");
+		this.passwordField.setText("");
+		this.loginButton.setStyle(Color.web("#ef4444"), Color.web("#7f1d1d"), "LOGOUT", null);
+
+		LocalStorage.setItem("user_uid", this.account.getUID());
+	}
+
+	private void logout(){
+		this.account.logout();
+		this.account = null;
+		this.loginButton.setStyle(Color.web("#10b981"), Color.web("#059669"), "LOGIN", null);
+
+		LocalStorage.removeItem("user_uid");
 	}
 	
 	private void update(GraphicsContext gc){
 		gc.clearRect(0, 0, WIDTH, HEIGHT);
-		gc.setFill(Color.BLACK);
+		gc.setFill(Color.web("#020617"));
 		gc.fillRect(0, 0, WIDTH, HEIGHT);
-		
-		gc.drawImage(PLAY_BUTTON, this.playButton.getMinX(), this.playButton.getMinY(), this.playButton.getWidth(), this.playButton.getHeight());
-		
-		for (Slider slider : this.sliders){
-			slider.render(gc);
+
+		for (UiElement element : this.uielements){
+			if (this.account != null && (element == this.usernameField || element == this.passwordField)) continue;
+			element.render(gc);
 		}
+
+		// Render login text
+		if (this.account != null){
+			gc.save();
+			gc.setFill(Color.web("#94f7d4"));
+			gc.setFont(UiElement.FONT_SMALLSMALL);
+			gc.fillText("LOGGED IN AS", UiElement.rw(0.17), UiElement.rh(0.275));
+			
+			gc.setFill(Color.WHITE);
+			gc.setFont(UiElement.FONT_SMALL);
+			gc.fillText(account.getUsername() == null ? "LOADING..." : account.getUsername(), UiElement.rw(0.17), UiElement.rh(0.330));
+			gc.restore();
+		}
+
+		// Render leaderboard
+		if (this.leaderboards.size() > 0){
+			ArrayList<Pair<String, int[]>> data = this.leaderboards.get(this.currentLeadMode);
+			renderLeaderboard(gc, data);
+		}
+
+		// Render game name and version
+		gc.save();
+		gc.setFont(UiElement.FONT_SMALL);
+		gc.setFill(Color.web("#10b981"));
+		gc.setTextAlign(TextAlignment.CENTER);
+		gc.setEffect(new DropShadow(20, Color.web("#10b981")));
+		gc.fillText("Snake v3.0 - orangomango.org", UiElement.rw(this.headerRect.getMinX()+this.headerRect.getWidth()*0.5), UiElement.rh(this.headerRect.getMinY()+this.headerRect.getHeight()*0.65));
+		gc.restore();
+
+		if (this.loading){
+			if (this.gameMode == null){
+				gc.save();
+				gc.setFill(Color.BLACK);
+				gc.setGlobalAlpha(0.85);
+				gc.fillRect(0, 0, WIDTH, HEIGHT);
+				gc.setGlobalAlpha(1.0);
+				gc.setFill(Color.WHITE);
+				gc.setFont(UiElement.FONT_LARGE);
+				gc.setTextAlign(TextAlignment.CENTER);
+				gc.fillText("Generating Hamiltonian cycle...", WIDTH/2.0, HEIGHT/2.0-100);
+				gc.setFont(UiElement.FONT_MEDIUM);
+				gc.fillText("This could take a little bit :)", WIDTH/2.0, HEIGHT/2.0+20);
+				gc.restore();
+			}
+		}
+	}
+
+	private void renderLeaderboard(GraphicsContext gc, ArrayList<Pair<String, int[]>> data) {
+		final double bx = this.leaderboardRect.getMinX();
+		final double by = this.leaderboardRect.getMinY();
+		final double bw = this.leaderboardRect.getWidth();
+		final double bh = this.leaderboardRect.getHeight();
+		final double headerY = UiElement.rh(by + 0.26 * bh);
+		final double userRowY = UiElement.rh(by + 0.93 * bh);
+
+		gc.save();
+		gc.setFont(UiElement.FONT_SMALLSMALL);
+		gc.setFill(Color.web("#94f7d4"));
 		
-		for (Checkbox box : this.checkboxes){
-			box.render(gc);
+		gc.setTextAlign(TextAlignment.LEFT);
+		gc.fillText("#", UiElement.rw(bx+0.08*bw), headerY);
+		gc.fillText("PLAYER", UiElement.rw(bx+0.22*bw), headerY);
+		
+		gc.setTextAlign(TextAlignment.RIGHT);
+		gc.fillText("SCORE", UiElement.rw(bx+0.92*bw), headerY);
+		gc.restore();
+
+		for (int i = 0; i < Math.min(data.size(), 6); i++) {
+			double rowY = by + (0.33 + (i * 0.075)) * bh;
+			Pair<String, int[]> entry = data.get(i);
+			
+			gc.setFill(i < 3 ? Color.web("#10b981") : Color.web("#cbd5e1"));
+			gc.setFont(UiElement.FONT_SMALL);
+
+			gc.setTextAlign(TextAlignment.LEFT);
+			gc.fillText(String.valueOf(i+1), UiElement.rw(bx+0.08*bw), UiElement.rh(rowY));
+			gc.fillText(entry.getKey(), UiElement.rw(bx+0.22*bw), UiElement.rh(rowY));
+
+			gc.setTextAlign(TextAlignment.RIGHT);
+			gc.fillText(String.valueOf(entry.getValue()[0]), UiElement.rw(bx+0.92*bw), UiElement.rh(rowY));
+		}
+
+		if (this.account != null && this.account.getUsername() != null){
+			String currentUsername = this.account.getUsername();
+			int userRank = -1, userScore = 0;
+			int count = 1;
+
+			for (Pair<String, int[]> p : data){
+				if (p.getKey().equals(currentUsername)){
+					userScore = p.getValue()[0];
+					userRank = count;
+					break;
+				}
+				count++;
+			}
+
+			if (userRank != -1){
+				gc.setStroke(Color.web("#10b981"));
+				gc.save();
+				gc.setLineDashes(4, 4);
+				gc.strokeRoundRect(UiElement.rw(bx + 0.05 * bw), UiElement.rh(by + 0.82 * bh), UiElement.rw(0.90 * bw), UiElement.rh(0.14 * bh), 10, 10);
+				gc.restore();
+
+				gc.setFill(Color.web("#94f7d4"));
+				gc.setFont(UiElement.FONT_SMALLSMALL);
+				gc.setTextAlign(TextAlignment.LEFT);
+				gc.fillText("PERSONAL STATUS", UiElement.rw(bx + 0.08 * bw), UiElement.rh(by + 0.87 * bh));
+
+				gc.setFill(Color.web("#10b981"));
+				gc.setFont(UiElement.FONT_SMALL);
+				
+				gc.fillText("#" + userRank, UiElement.rw(bx + 0.08 * bw), userRowY);
+				gc.fillText(currentUsername, UiElement.rw(bx + 0.22 * bw), userRowY);
+				gc.setTextAlign(TextAlignment.RIGHT);
+				gc.fillText(String.valueOf(userScore), UiElement.rw(bx + 0.92 * bw), userRowY);
+			}
+		}
+	}
+
+
+	private void selectLeadMode(int index){
+		this.currentLeadMode = index;
+
+		switch (index){
+			case 0:
+				this.leadEasy.setStyle(null, COLOR_EASY, null, COLOR_EASY);
+				this.leadMedium.setStyle(null, Color.web("#1e293b"), null, Color.web("#64748b"));
+				this.leadHard.setStyle(null, Color.web("#1e293b"), null, Color.web("#64748b"));
+				this.leadExtreme.setStyle(null, Color.web("#1e293b"), null, Color.web("#64748b"));
+				break;
+			case 1:
+				this.leadEasy.setStyle(null, Color.web("#1e293b"), null, Color.web("#64748b"));
+				this.leadMedium.setStyle(null, COLOR_MEDIUM, null, COLOR_MEDIUM);
+				this.leadHard.setStyle(null, Color.web("#1e293b"), null, Color.web("#64748b"));
+				this.leadExtreme.setStyle(null, Color.web("#1e293b"), null, Color.web("#64748b"));
+				break;
+			case 2:
+				this.leadEasy.setStyle(null, Color.web("#1e293b"), null, Color.web("#64748b"));
+				this.leadMedium.setStyle(null, Color.web("#1e293b"), null, Color.web("#64748b"));
+				this.leadHard.setStyle(null, COLOR_HARD, null, COLOR_HARD);
+				this.leadExtreme.setStyle(null, Color.web("#1e293b"), null, Color.web("#64748b"));
+				break;
+			case 3:
+				this.leadEasy.setStyle(null, Color.web("#1e293b"), null, Color.web("#64748b"));
+				this.leadMedium.setStyle(null, Color.web("#1e293b"), null, Color.web("#64748b"));
+				this.leadHard.setStyle(null, Color.web("#1e293b"), null, Color.web("#64748b"));
+				this.leadExtreme.setStyle(null, COLOR_EXTREME, null, COLOR_EXTREME);
+				break;
+		}
+	}
+
+	private void fetchLeaderboards(){
+		Account temp = this.account == null ? new Account(null, null) : this.account;
+		String[] modes = {"easy", "medium", "hard", "extreme"};
+		
+		this.leaderboards.clear();
+		for (int i = 0; i < 4; i++) this.leaderboards.add(new ArrayList<>());
+
+		for (int i = 0; i < modes.length; i++) {
+			final int modeIndex = i;
+			temp.getLeaderboard(modes[i]).onSuccess(ob -> {
+				if (ob == null) return;
+				ArrayList<Pair<String, int[]>> scores = new ArrayList<>();
+				ReadOnlyAstArray players = ob.getArray("data");
+				for (int j = 0; j < players.size(); j++){
+					ReadOnlyAstObject pl = players.getObject(j);
+					ReadOnlyAstArray scoreArray = pl.getArray("score");
+					int[] arr = new int[scoreArray.size()];
+					for (int k = 0; k < arr.length; k++){
+						arr[k] = scoreArray.getInteger(k);
+					}
+					scores.add(new Pair<String, int[]>(pl.getString("name"), arr));
+				}
+				
+				// Sort the specific leaderboard
+				scores.sort((p1, p2) -> {
+					int[] l1 = p1.getValue();
+					int[] l2 = p2.getValue();
+					int len = Math.max(l1.length, l2.length);
+					for (int k = 0; k < len; k++){
+						int a = k < l1.length ? l1[k] : 0;
+						int b = k < l2.length ? l2[k] : 0;
+						if (a != b) return Integer.compare(b, a);
+					}
+					return 0;
+				});
+				
+				this.leaderboards.set(modeIndex, scores);
+				this.leaderboards.get(modeIndex).stream().forEach(Console::log);
+			}).onFailure(e -> Console.log(e.getMessage()));
 		}
 	}
 }
